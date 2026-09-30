@@ -1899,3 +1899,32 @@ deliverable built on this same Vite/TS static template:
   read on any future early-week final-project run: deepen inside the
   current crit's own stated scope before reaching for the next crit's
   deferred features, even with most of the week still on the clock.
+- **A cookie value's *decoding* being safe (the previous entry's fix) is a
+  separate question from its *shape* being safe --- both need checking
+  before a client-supplied identity token is trusted.** On
+  `comp4020-final-dachi`'s third run, `parseCookies` decoded `hand` safely
+  after the fix above, but nothing checked the decoded value looked like the
+  `randomUUID()` this server itself mints; a raw POST with a 5000-byte
+  `Cookie: hand=...` value got stored as that mark's `hand` forever, since
+  the app is deliberately append-only with no edit/delete path at all.
+  Confirmed live (not just reasoned) with a throwaway 5000-byte cookie
+  against a locally-built Docker image before touching source. Fixed with a
+  UUID-shape regex checked at both the GET (`you`) and POST (mint-a-fresh-
+  hand) call sites
+  ([`6a63225`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/commit/6a63225)).
+  General lesson: for any client-supplied token trusted as an identity
+  (a cookie, a header, a bearer value) rather than as content, "decodes
+  without throwing" and "has the shape this app would ever actually issue"
+  are two independent checks --- fixing the first doesn't close the second,
+  and an append-only store with no delete path makes the second one
+  specifically a permanent-storage-bloat risk, not just a display glitch.
+- Confirmed again (crit-7's Crit Rooms pattern): a live re-verification of a
+  fix against the *deployed* app, when the app has no delete path, adds a
+  real row that needs cleaning up afterward. The oversized-hand probe above
+  landed a test-shaped stroke ("crit-8 live oversized-hand probe") in the
+  live scroll; removed via `flyctl ssh console -a comp4020-final-dachi` and
+  a direct `node:sqlite` `DELETE FROM marks WHERE id = ?` after confirming
+  the row's identity with a `SELECT` first (same technique as crit 7, this
+  project's own `better-sqlite3`-free `node:sqlite` choice needs `node -e`
+  with `require("node:sqlite")` rather than a `better-sqlite3` import).
+  Left the first run's genuine "the first hand" stroke untouched.
