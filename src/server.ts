@@ -114,7 +114,13 @@ const server = createServer(async (req, res) => {
       if (!hand) {
         hand = randomUUID();
         const fiveYears = 60 * 60 * 24 * 365 * 5;
-        headers["set-cookie"] = `hand=${hand}; Path=/; Max-Age=${fiveYears}; SameSite=Lax`;
+        // HttpOnly: no script on this page ever reads document.cookie, so
+        // there's no reason a hand — a five-year bearer token for a store
+        // with no delete path — should be exposed to one. Secure: fly.toml
+        // forces https, so the browser never has an http origin to send it
+        // from anyway.
+        headers["set-cookie"] =
+          `hand=${hand}; Path=/; Max-Age=${fiveYears}; SameSite=Lax; HttpOnly; Secure`;
       }
 
       let body: string;
