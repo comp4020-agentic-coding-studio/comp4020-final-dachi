@@ -91,6 +91,15 @@ it("remembers a hand across requests, and a returning hand can see its own past 
   );
 });
 
+it("treats a malformed percent-encoded hand cookie as no hand, not a 500", async () => {
+  const res = await fetch(new URL("/api/marks", baseUrl), {
+    headers: { cookie: "hand=%zz" },
+  });
+  expect(res.status).toBe(200);
+  const { you } = await res.json();
+  expect(you).toBeNull();
+});
+
 it("answers 404 for a route that isn't part of the app", async () => {
   const res = await fetch(new URL("/not-a-real-route", baseUrl));
   expect(res.status).toBe(404);

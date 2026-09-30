@@ -22,7 +22,15 @@ function parseCookies(header: string | undefined): Record<string, string> {
     if (eq === -1) continue;
     const key = part.slice(0, eq).trim();
     const value = part.slice(eq + 1).trim();
-    if (key) out[key] = decodeURIComponent(value);
+    if (!key) continue;
+    // A cookie header is client-supplied input like any other: malformed
+    // percent-encoding must degrade to "no hand", not throw and 500 the
+    // whole request.
+    try {
+      out[key] = decodeURIComponent(value);
+    } catch {
+      continue;
+    }
   }
   return out;
 }
