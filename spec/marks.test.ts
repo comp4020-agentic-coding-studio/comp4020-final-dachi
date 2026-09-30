@@ -100,6 +100,22 @@ it("treats a malformed percent-encoded hand cookie as no hand, not a 500", async
   expect(you).toBeNull();
 });
 
+it("treats an oversized hand cookie as no hand, not a stored value, and mints a fresh one", async () => {
+  const oversized = "a".repeat(5000);
+  const res = await fetch(new URL("/api/marks", baseUrl), {
+    method: "POST",
+    headers: { "content-type": "application/json", cookie: `hand=${oversized}` },
+    body: JSON.stringify({ color: "#8a6d3b", note: "oversized hand probe" }),
+  });
+  expect(res.status).toBe(201);
+  const created = (await res.json()).mark;
+  expect(created.hand).not.toBe(oversized);
+  expect(created.hand.length).toBeLessThan(oversized.length);
+
+  const cookie = firstCookie(res);
+  expect(cookie, "a fresh hand cookie should be issued when the supplied one is invalid").toBeTruthy();
+});
+
 it("answers 404 for a route that isn't part of the app", async () => {
   const res = await fetch(new URL("/not-a-real-route", baseUrl));
   expect(res.status).toBe(404);

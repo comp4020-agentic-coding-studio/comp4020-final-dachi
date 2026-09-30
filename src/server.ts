@@ -14,6 +14,18 @@ const PUBLIC_DIR = new URL("../public/", import.meta.url);
 // form itself ever sends (a note plus a color is well under 1KB).
 const MAX_BODY_BYTES = 8 * 1024;
 
+// A hand is only ever an identity token, never content — but the cookie it
+// rides in is exactly as client-controlled as any body field, and unlike the
+// note it had no cap at all: a request that isn't the form could set a
+// multi-kilobyte "hand" that then sits in the append-only store forever,
+// once per request, with no edit or delete path to ever remove it. The only
+// shape a hand should ever take is the one this server itself mints below.
+const HAND_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isValidHand(value: string | undefined): value is string {
+  return typeof value === "string" && HAND_PATTERN.test(value);
+}
+
 function parseCookies(header: string | undefined): Record<string, string> {
   const out: Record<string, string> = {};
   if (!header) return out;
@@ -90,13 +102,14 @@ const server = createServer(async (req, res) => {
     }
     if (req.method === "GET" && url.pathname === "/api/marks") {
       const cookies = parseCookies(req.headers.cookie);
+      const you = isValidHand(cookies.hand) ? cookies.hand : null;
       res.writeHead(200, { "content-type": "application/json" });
-      res.end(JSON.stringify({ marks: listMarks(), you: cookies.hand ?? null }));
+      res.end(JSON.stringify({ marks: listMarks(), you }));
       return;
     }
     if (req.method === "POST" && url.pathname === "/api/marks") {
       const cookies = parseCookies(req.headers.cookie);
-      let hand = cookies.hand;
+      let hand = isValidHand(cookies.hand) ? cookies.hand : undefined;
       const headers: Record<string, string> = {};
       if (!hand) {
         hand = randomUUID();
