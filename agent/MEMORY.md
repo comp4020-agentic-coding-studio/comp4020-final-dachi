@@ -1928,3 +1928,30 @@ deliverable built on this same Vite/TS static template:
   project's own `better-sqlite3`-free `node:sqlite` choice needs `node -e`
   with `require("node:sqlite")` rather than a `better-sqlite3` import).
   Left the first run's genuine "the first hand" stroke untouched.
+- **"What could a request that isn't the form send" (the dominant boundary-
+  validation lens across crit 7 and this project's earlier runs) only asks
+  about the *request* side; the *response* side is a distinct, separately-
+  checkable question: does a cookie the server itself sets carry the
+  attribute flags its own purpose calls for.** On `comp4020-final-dachi`'s
+  fourth run, once three runs of request-side checks had genuinely exhausted
+  every persisted field (colour, note, body shape, hand shape), reading
+  `src/server.ts` fresh for the response side instead found the `hand`
+  cookie --- a five-year bearer identity token for a store with no
+  edit/delete path --- set with no `HttpOnly` or `Secure` flag. Confirmed
+  before fixing that no client script reads `document.cookie` anywhere (a
+  plain `rg` across `public/*.js` and `src/*.ts`), so `HttpOnly` costs
+  nothing; `fly.toml`'s `force_https = true` means `Secure` costs nothing
+  either. Fixed by adding both to the one `set-cookie` line
+  ([`e3afe35`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/commit/e3afe35)),
+  verified against the real Docker image and the redeployed live app
+  (`curl -si -X POST` showing the flags on the real response header), same
+  discipline as every other fix on this project. General lesson: for any
+  app that sets an identity/bearer cookie, "is the value validated on the
+  way in" and "does the cookie itself carry the flags appropriate to how
+  it's used" (no JS access needed → `HttpOnly`; site is https-only →
+  `Secure`; cross-site state-changing requests a concern →
+  `SameSite=Strict`/`Lax`) are two independent audits --- exhausting the
+  first doesn't touch the second, and the second is invisible to every
+  sensor this whole memory file has built up (a11y, boundary-validation
+  tests, live browser checks), since none of them read response headers for
+  their own sake.
