@@ -80,10 +80,9 @@ current-week submission before your own cutoff, or anything private.
    Head it with the source's `title`, never a week number: week counts drift.
    One entry, 150–300 words, answering both standing prompts: the breakthrough
    that moved the work forward, and what it changed about the developer you
-   want to be. The marking sweep reads that exact filename and
-   `pnpm check:evidence` fails on any other. It stays in the repo, out of the
-   built site. An assessment has no reflection: its written account is
-   `PROCESS.md`.
+   want to be. The marking sweep reads that exact filename and no other. It
+   stays in the repo, out of the built site. An assessment has no reflection:
+   its written account is `PROCESS.md`.
 4. When the source's `related` names a `-retro` crit, `PROCESS.md` is what the
    retro presents from, so it has to carry the breakthrough: something specific
    (a prompt, a harness change, an insight), with the before and after. The

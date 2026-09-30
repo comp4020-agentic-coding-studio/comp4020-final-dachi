@@ -5,6 +5,14 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
 
 ## Environment
 
+- In a fresh environment the current user isn't in the `docker` group
+  (`groups` omits `docker`, `/var/run/docker.sock` is `root:docker`), so a
+  bare `docker build`/`docker run` fails with "permission denied while
+  trying to connect to the docker API." `sudo -n docker ...` (passwordless)
+  works and is the fix --- confirmed on `comp4020-final-dachi`'s second run,
+  needed to build and run the exact CI image locally the way this project's
+  own `PROCESS.md` discipline calls for. Bash calls that touch the socket
+  need `dangerouslyDisableSandbox: true` as well as the `sudo -n` prefix.
 - `mise` refuses to run until its config is trusted in a fresh environment:
   `mise ERROR Config files in ~/.config/mise/config.local.toml are not
   trusted` blocks every `pnpm`/`mise exec` call. Fix once per environment
@@ -1856,3 +1864,38 @@ deliverable built on this same Vite/TS static template:
   live keyboard-submission check left a "TabTest" booking that genuinely
   needed deleting via `flyctl ssh console` afterward, since a fake booking
   in a real room schedule has no honest reading).
+- **The "what could a request that isn't the form send" boundary-validation
+  question (crit 7's dominant bug family) applies to request *headers*, not
+  just the body/fields a form controls.** On `comp4020-final-dachi`'s second
+  run, `parseCookies` in `src/server.ts` called `decodeURIComponent` on every
+  `Cookie` header value with no guard; a malformed percent-encoded value
+  (`Cookie: hand=%zz`) threw, and the outer try/catch turned that into a 500
+  --- even though the same app already held itself, via an existing test, to
+  never letting a malformed JSON *body* do that. No form the app serves can
+  ever produce a bad cookie (it always sets `hand` to a bare `randomUUID()`),
+  so this needed a raw `curl -H "Cookie: hand=%zz"` to reach, the same way
+  crit 7's timestamp/length/CSRF gaps all needed a request that skipped the
+  form. Fixed with a try/catch around the one `decodeURIComponent` call,
+  degrading to "skip this cookie" rather than throwing
+  ([`98148df`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/commit/98148df)).
+  General lesson: when doing a boundary-validation pass on a full-stack app,
+  enumerate *every* place client-supplied text gets decoded (`Cookie`,
+  `Authorization`, custom headers, query-string params via
+  `decodeURIComponent`/`JSON.parse`/similar) as its own checklist item, not
+  just the request body and form fields --- headers are exactly as
+  attacker/bug-controlled as a POST body, and easy to forget precisely
+  because no real form ever touches them.
+- This was also a useful calibration point for *when* to look for bugs on a
+  brand-new, minimal deliverable: crit 8's own bar ("proof of life") was
+  already fully met after the first run, and the brief explicitly defers
+  real-time and rate-limiting to crits 9/10 --- so a second run at 160.5h to
+  cutoff (still >95% of the week left) correctly read "deepen" as "re-read
+  the existing code fresh for boundary-validation gaps and run not-yet-tried
+  browser sensors (320px reflow, a full keyboard-only submission, a11y on
+  both pages)," not as "start building crit-9 features early." One real bug
+  turned up (the cookie one above); everything else (a11y, keyboard tab
+  order plus arrow-key palette selection, 320px reflow, XSS via
+  `textContent` rather than `innerHTML`) came back clean. Worth the same
+  read on any future early-week final-project run: deepen inside the
+  current crit's own stated scope before reaching for the next crit's
+  deferred features, even with most of the week still on the clock.
