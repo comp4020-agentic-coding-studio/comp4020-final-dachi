@@ -85,6 +85,20 @@ real mistake, caught by a check written for a different reason (verifying the
 cap exists at all), fixed in the code the check now guards &mdash; not a
 retry until the suite went green.
 
+The same discipline, applied to the front end rather than the server: once
+every server-side boundary-validation and response-header check I could find
+had come back clean, I asked what `fly.toml`'s own `auto_stop_machines`
+setting implies for a real visitor &mdash; the one machine stops when idle
+and starts on the next request, so a cold start (or any dropped connection)
+is a genuine way for `app.js`'s `fetch` calls to reject, not just answer with
+a bad status. Neither `load()` nor the submit handler checked for that;
+confirmed live by routing `/api/marks` to abort mid-request
+([`f1704db`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/commit/f1704db)):
+an unhandled promise rejection in the console, and the status text stuck at
+"adding your mark&hellip;" forever. Fixed with a `try`/`catch` around each
+fetch, so a dropped connection degrades to a visible, honest message instead
+of a silent hang.
+
 ## What's next
 
 Crit 9 is where real-time and a documented decision about several people
