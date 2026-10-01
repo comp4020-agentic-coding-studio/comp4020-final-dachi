@@ -1,3 +1,4 @@
+import { connect } from "node:net";
 import { expect, inject, it } from "vitest";
 
 // The two things spec/invariants.test.ts already checks (/ answers, /readme/
@@ -145,6 +146,35 @@ it("rejects a POST with no Origin header at all, the same as a mismatched one", 
     body: JSON.stringify({ color: "#2b2118", note: "no origin header" }),
   });
   expect(res.status).toBe(403);
+});
+
+it("survives a client that vanishes mid-upload, not just an oversized one", async () => {
+  // Distinct from the oversized-body test above: that one sends a complete,
+  // over-cap request and gets a clean 413. This one never finishes sending —
+  // a client whose connection drops mid-body (a flaky network, a closed tab)
+  // hits a different branch of src/server.ts's readBody (the socket's own
+  // "error" event, not the size-cap check), which no existing test reached.
+  const { hostname, port } = new URL(baseUrl);
+  await new Promise<void>((resolve, reject) => {
+    const socket = connect(Number(port) || 80, hostname, () => {
+      socket.write(
+        `POST /api/marks HTTP/1.1\r\n` +
+          `Host: ${hostname}:${port}\r\n` +
+          `Origin: ${baseUrl}\r\n` +
+          `Content-Type: application/json\r\n` +
+          `Content-Length: 5000\r\n` +
+          `Connection: close\r\n\r\n` +
+          `{"color":"#2b2118","note":"`,
+      );
+      // Never send the rest: reset the connection instead of a graceful FIN.
+      socket.resetAndDestroy();
+    });
+    socket.on("close", () => resolve());
+    socket.on("error", reject);
+  });
+
+  const health = await fetch(new URL("/", baseUrl));
+  expect(health.status).toBe(200);
 });
 
 it("answers 404 for a route that isn't part of the app", async () => {
