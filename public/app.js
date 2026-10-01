@@ -93,9 +93,20 @@ function render(marks, you) {
 }
 
 async function load() {
-  const res = await fetch("/api/marks");
-  const data = await res.json();
-  render(data.marks, data.you);
+  // fly.toml stops this app's one machine when idle and starts it on the next
+  // request, so a cold start (or any dropped connection) is a real, not
+  // hypothetical, way for this fetch to reject rather than resolve.
+  try {
+    const res = await fetch("/api/marks");
+    const data = await res.json();
+    render(data.marks, data.you);
+  } catch {
+    scrollList.innerHTML = "";
+    const notice = document.createElement("li");
+    notice.className = "scroll__empty";
+    notice.textContent = "couldn't load the scroll — check your connection and try reloading.";
+    scrollList.append(notice);
+  }
 }
 
 form.addEventListener("submit", async (event) => {
@@ -104,11 +115,17 @@ form.addEventListener("submit", async (event) => {
   const note = noteInput.value;
 
   statusEl.textContent = "adding your mark…";
-  const res = await fetch("/api/marks", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ color, note }),
-  });
+  let res;
+  try {
+    res = await fetch("/api/marks", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ color, note }),
+    });
+  } catch {
+    statusEl.textContent = "that mark couldn't be added — check your connection and try again.";
+    return;
+  }
 
   if (!res.ok) {
     statusEl.textContent = "that mark couldn't be added — try a shorter note.";
