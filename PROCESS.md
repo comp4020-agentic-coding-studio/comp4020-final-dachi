@@ -99,6 +99,24 @@ an unhandled promise rejection in the console, and the status text stuck at
 fetch, so a dropped connection degrades to a visible, honest message instead
 of a silent hang.
 
+A later pass asked a question none of the field-level validation above
+covers: not what a direct request can put *in* the body, but what request
+can reach the handler at all. The server never checked where a POST came
+from, so I built a tiny page on a different local origin &mdash; a hidden,
+auto-submitting `<form enctype="text/plain">`, the standard technique for
+smuggling raw JSON past a server that (like this one) never checks the
+`Content-Type` header &mdash; and confirmed live that visiting it silently
+added a real row to the scroll, no click or confirmation involved. Into a
+store with no edit or delete path, that is not a cosmetic gap: any visitor
+who merely loaded an unrelated malicious page could have their browser
+vandalise the scroll on their behalf, permanently. Fixed by checking every
+POST's `Origin` header against its own `Host` &mdash; browsers set `Origin`
+on every unsafe-method request and never let page script override it, so
+this is the same defence Astro's own framework gave crit 7's project for
+free; here, with no framework underneath, it had to be written by hand. Ran
+the exact same attack page against the patched server afterward and
+confirmed it no longer lands a row, while the real form still works.
+
 ## What's next
 
 Crit 9 is where real-time and a documented decision about several people
