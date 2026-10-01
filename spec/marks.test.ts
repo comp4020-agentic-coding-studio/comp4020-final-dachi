@@ -11,10 +11,19 @@ function firstCookie(res: Response): string | undefined {
   return res.headers.get("set-cookie")?.split(";")[0];
 }
 
+// The server rejects a POST whose Origin doesn't match its own host (see
+// src/server.ts's isSameOrigin), the same way a real browser's own Origin
+// header would on every one of these calls. Every test below that posts
+// opts into that match explicitly, the same way crit 7's own spec learned
+// to for an equivalent same-origin check.
+function postHeaders(extra: Record<string, string> = {}): Record<string, string> {
+  return { "content-type": "application/json", origin: baseUrl, ...extra };
+}
+
 it("rejects a colour outside the six the palette offers", async () => {
   const res = await fetch(new URL("/api/marks", baseUrl), {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: postHeaders(),
     body: JSON.stringify({ color: "#ff00ff", note: "not on the palette" }),
   });
   expect(res.status).toBe(422);
@@ -24,7 +33,7 @@ it("rejects a colour outside the six the palette offers", async () => {
 it("rejects a note over 140 characters even though the input's own maxlength would stop it", async () => {
   const res = await fetch(new URL("/api/marks", baseUrl), {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: postHeaders(),
     body: JSON.stringify({ color: "#2b2118", note: "x".repeat(141) }),
   });
   expect(res.status).toBe(422);
@@ -34,7 +43,7 @@ it("rejects a note over 140 characters even though the input's own maxlength wou
 it("rejects a body larger than the server's own cap, before it ever reaches validation", async () => {
   const res = await fetch(new URL("/api/marks", baseUrl), {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: postHeaders(),
     body: JSON.stringify({ color: "#2b2118", note: "x".repeat(20_000) }),
   });
   expect(res.status).toBe(413);
@@ -43,7 +52,7 @@ it("rejects a body larger than the server's own cap, before it ever reaches vali
 it("rejects a malformed JSON body without crashing the server", async () => {
   const res = await fetch(new URL("/api/marks", baseUrl), {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: postHeaders(),
     body: "not json",
   });
   expect(res.status).toBe(400);
@@ -57,7 +66,7 @@ it("adds a valid stroke, and a fresh read of the scroll includes it", async () =
   const note = `crit-8 spec run ${Date.now()}`;
   const post = await fetch(new URL("/api/marks", baseUrl), {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: postHeaders(),
     body: JSON.stringify({ color: "#3f5d40", note }),
   });
   expect(post.status).toBe(201);
@@ -73,7 +82,7 @@ it("adds a valid stroke, and a fresh read of the scroll includes it", async () =
 it("remembers a hand across requests, and a returning hand can see its own past strokes", async () => {
   const first = await fetch(new URL("/api/marks", baseUrl), {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: postHeaders(),
     body: JSON.stringify({ color: "#3a5a6b", note: "first visit" }),
   });
   const cookie = firstCookie(first);
@@ -104,7 +113,7 @@ it("treats an oversized hand cookie as no hand, not a stored value, and mints a 
   const oversized = "a".repeat(5000);
   const res = await fetch(new URL("/api/marks", baseUrl), {
     method: "POST",
-    headers: { "content-type": "application/json", cookie: `hand=${oversized}` },
+    headers: postHeaders({ cookie: `hand=${oversized}` }),
     body: JSON.stringify({ color: "#8a6d3b", note: "oversized hand probe" }),
   });
   expect(res.status).toBe(201);
@@ -114,6 +123,28 @@ it("treats an oversized hand cookie as no hand, not a stored value, and mints a 
 
   const cookie = firstCookie(res);
   expect(cookie, "a fresh hand cookie should be issued when the supplied one is invalid").toBeTruthy();
+});
+
+it("rejects a cross-site POST even when every field is otherwise valid", async () => {
+  const res = await fetch(new URL("/api/marks", baseUrl), {
+    method: "POST",
+    headers: { "content-type": "application/json", origin: "https://attacker.example" },
+    body: JSON.stringify({ color: "#2b2118", note: "drive-by" }),
+  });
+  expect(res.status).toBe(403);
+
+  const list = await fetch(new URL("/api/marks", baseUrl));
+  const { marks } = await list.json();
+  expect(marks.some((m: { note: string }) => m.note === "drive-by")).toBe(false);
+});
+
+it("rejects a POST with no Origin header at all, the same as a mismatched one", async () => {
+  const res = await fetch(new URL("/api/marks", baseUrl), {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ color: "#2b2118", note: "no origin header" }),
+  });
+  expect(res.status).toBe(403);
 });
 
 it("answers 404 for a route that isn't part of the app", async () => {

@@ -26,6 +26,25 @@ function isValidHand(value: string | undefined): value is string {
   return typeof value === "string" && HAND_PATTERN.test(value);
 }
 
+// A cross-site page can make a visitor's browser submit a POST without the
+// visitor ever meaning to — a hidden auto-submitting <form
+// enctype="text/plain"> lands raw JSON in the body despite the form's own
+// Content-Type, and this server never checked the Content-Type header
+// anyway, so nothing above stopped it. Confirmed live: such a page added a
+// mark with no user interaction at all. Into a store with no edit or delete
+// path, every such write is permanent, so every browser's own Origin header
+// (sent on every unsafe-method request, same-origin or not, and never
+// settable by page script) is checked against this request's own host.
+function isSameOrigin(req: IncomingMessage): boolean {
+  const origin = req.headers.origin;
+  if (typeof origin !== "string") return false;
+  try {
+    return new URL(origin).host === req.headers.host;
+  } catch {
+    return false;
+  }
+}
+
 function parseCookies(header: string | undefined): Record<string, string> {
   const out: Record<string, string> = {};
   if (!header) return out;
@@ -108,6 +127,12 @@ const server = createServer(async (req, res) => {
       return;
     }
     if (req.method === "POST" && url.pathname === "/api/marks") {
+      if (!isSameOrigin(req)) {
+        res.writeHead(403, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "cross-site-request" }));
+        return;
+      }
+
       const cookies = parseCookies(req.headers.cookie);
       let hand = isValidHand(cookies.hand) ? cookies.hand : undefined;
       const headers: Record<string, string> = {};
