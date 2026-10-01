@@ -117,6 +117,19 @@ free; here, with no framework underneath, it had to be written by hand. Ran
 the exact same attack page against the patched server afterward and
 confirmed it no longer lands a row, while the real form still works.
 
+A sixth pass asked a narrower question about the same body-size guard: the
+existing test only ever sends a complete, over-cap request. A client whose
+connection actually drops mid-upload (a flaky network, a closed tab) hits a
+different branch of `readBody` &mdash; the socket's own `error` event, not the
+size-cap check &mdash; which nothing exercised. Confirmed live with a raw
+`node:net` socket that sends a partial body and then resets the connection:
+the server already handles it correctly (the existing `req.on("error",
+reject)` was wired up for the size-cap case but covers this one too), so this
+didn't change `src/server.ts`. It did close a real coverage gap, landed as a
+regression test
+([`67e28e7`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/commit/67e28e7))
+that now pins the behaviour down rather than leaving it to coincidence.
+
 ## What's next
 
 Crit 9 is where real-time and a documented decision about several people
