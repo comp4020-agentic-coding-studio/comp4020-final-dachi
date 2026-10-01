@@ -1,46 +1,55 @@
-# Hand-off --- crit 8 (final project, "It's alive!"), fifth run
+# Hand-off --- crit 8 (final project, "It's alive!"), sixth run
 
 ## State
 
-136.5h to cutoff at prompt time, still crit 8's own window (brief re-fetched,
-unchanged). The fourth run's hand-off said four sensor lenses (request-side
-boundary validation, three runs; response-header hardening, one run) had each
-gone dry, and the next run should re-read the source fresh before falling
-back to a repeat a11y/keyboard/reflow pass.
+130.5h to cutoff at prompt time, still crit 8's own window (brief re-fetched,
+unchanged). The fifth run's hand-off flagged that `public/app.js` had changed
+for the first time since the a11y/keyboard/reflow sweep, and said to re-verify
+that sweep plus do one more fresh source read before concluding sensors were
+dry.
 
-Did that fresh read and found a fifth: neither `load()` nor the submit
-handler in `public/app.js` had any failure path for a `fetch` that *rejects*
-(network drop, not just a bad HTTP status) --- and `fly.toml`'s own
-`auto_stop_machines = "stop"` / `min_machines_running = 0` makes a cold start
-a real, not hypothetical, way for that to happen to an actual visitor.
-Confirmed live (`agent-browser network route "**/api/marks" --abort`, a real
-`addEventListener('unhandledrejection', ...)` listener): an unhandled
-rejection in the console, and the status text stuck at "adding your mark…"
-forever on the submit path; the scroll silently never populated on the load
-path. Fixed with a `try`/`catch` around each fetch call, degrading to a
-visible, honest message instead of a silent hang ---
-[`f1704db`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/commit/f1704db).
-Verified against the real Docker image (`sudo -n docker build`/`run`, 11/11
-`pnpm check` against the container), re-confirmed the fix live with
-`agent-browser` both before and after, pushed, redeployed, and confirmed the
-live `app.js` serves the fixed text (`curl`, no live form submission needed
-since this was a pure client-side JS fix --- nothing new landed in the
-permanent scroll this run). Cited in `PROCESS.md`
-([`a2860a7`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/commit/a2860a7)).
+Did both. The sweep (a11y on `/` and `/readme/`, Tab order, arrow-key radio
+navigation, a full keyboard-only fill-and-submit, 320px reflow, both marking
+viewports) all came back clean against the rebuilt Docker image. The fresh
+source read found a real one, though: `src/server.ts`'s POST handler never
+checked where a request came from. A hidden, auto-submitting
+`<form enctype="text/plain">` on an unrelated page smuggles raw JSON past the
+server's own Content-Type-blind body parser (it never checked Content-Type at
+all) --- confirmed live with a throwaway cross-origin page that silently
+added a real mark with zero user interaction. Into a store with no edit or
+delete path, that's permanent drive-by vandalism, not a cosmetic gap. Fixed
+with an `isSameOrigin` check (Origin header's host vs. the request's own
+Host) on the one state-changing route, rejecting both a mismatched Origin and
+a missing one --- mirroring the equivalent framework-provided check crit 7
+got for free from Astro, hand-written here because there's no framework.
+Thirteen tests now (`spec/marks.test.ts`), all passing against the real
+Docker image; re-ran the same attack page against the patched server and
+confirmed it no longer lands a row, while the real form still works.
+([`872ad20`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/commit/872ad20),
+docs in
+[`dd07c17`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/commit/dd07c17)).
+
+Deployed (the repo is still private this crit, so `/ship`-style CI deploy
+doesn't run yet --- deployed by hand per doctrine step 7). Verified live:
+cross-site POST gets 403, same-origin POST still gets 201. The live
+same-origin verification POST itself landed a real row in production (no
+delete path); cleaned it up via `flyctl ssh console` + a direct
+`node:sqlite` `DELETE`, confirmed the scroll is back to just "the first
+hand" afterward.
 
 ## Next action
 
-Five sensor lenses deep now (request-side validation ×3, response headers
-×1, front-end network-failure handling ×1). `public/app.js` changed this
-run for the first time since the second run's a11y/keyboard/reflow sweep ---
-worth a quick re-verify of that sweep next run specifically because the file
-changed, not as a blind repeat. Re-read `src/*.ts` and `public/app.js` fresh
-first regardless; this is still a genuinely small codebase (~900 lines) and
-each of the last three runs found exactly one real thing by reading it again
-with a new question, not by re-running an old one. If a repeat source read
-and the a11y/keyboard/reflow sweep both come back clean, that's a legitimate
-point to stop inventing new lenses for a while --- 136.5h is still >24h out,
-so the job is still plan/build/deepen, not finish, but "deepen" doesn't mean
-force a sixth lens where none occurs after a genuine fresh look. If the
-prompt is ever crit 9 ("All at once"), `PROCESS.md`'s "what's next" already
-names the no-rate-limit choice as the first thing to re-argue.
+Six runs deep, five distinct bugs found across the lenses this project has
+accumulated (cookie decode, cookie shape, response-header hardening, front-
+end fetch-rejection handling, now cross-site POST). The next genuinely
+untried question, if a fresh read goes quiet again: whether the GET
+`/api/marks` route itself should also gate on anything (it's read-only,
+shared, already-public data, so probably not worth an Origin check --- but
+worth asking explicitly rather than assuming). Otherwise, 130.5h is still
+comfortably plan/build/deepen territory, not finish: keep re-reading
+`src/*.ts` and `public/app.js` fresh each run before falling back to a
+repeat browser sweep, the way the last several runs each found exactly one
+real thing this way. If the prompt is ever crit 9 ("All at once"),
+`PROCESS.md`'s "what's next" already names the no-rate-limit choice as the
+first thing to re-argue, and real-time/several-people-at-once is the new
+work that crit actually asks for.

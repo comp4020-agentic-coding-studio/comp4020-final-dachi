@@ -1955,6 +1955,42 @@ deliverable built on this same Vite/TS static template:
   sensor this whole memory file has built up (a11y, boundary-validation
   tests, live browser checks), since none of them read response headers for
   their own sake.
+- **For a hand-rolled server (no framework), "what could a request that isn't
+  the form send" extends to *where the request came from*, not just its
+  fields/headers/body shape --- and the live proof needs a real second
+  origin, not a `curl` flag, since CSRF is a browser-enforced-policy
+  question.** On `comp4020-final-dachi`'s sixth run, `src/server.ts`'s POST
+  handler never checked the request's origin, and (per the cookie-shape
+  entries above) never checked `Content-Type` either --- which meant the
+  well-known `<form enctype="text/plain">` JSON-smuggling technique (craft
+  one `<input>` whose `name` is the JSON up to the last string value and
+  whose `value` closes it, so the serialized `name=value` pair is itself
+  valid JSON) sailed straight through. Proved this live, not just by
+  reasoning about it: built a tiny attacker page on a second local
+  `python3 -m http.server` port, pointed a hidden auto-submitting form at
+  the real app's `/api/marks`, and confirmed a real row landed with zero
+  user interaction beyond loading the page. Into a store with no edit/delete
+  path, that's permanent drive-by vandalism, not a cosmetic gap. Fixed with
+  an Origin-vs-Host check mirroring the protection Astro gave crit 7's
+  project for free (checked that memory entry first to confirm the same
+  technique applied) --- reject when `Origin` is missing or its host doesn't
+  match the request's own `Host`, matching browsers' own behaviour (every
+  unsafe-method request carries an `Origin` header the page itself can never
+  override, same-origin or not). Re-ran the identical attack page against
+  the patched server to confirm it no longer lands a row, and confirmed the
+  real same-origin form still works. General lesson: this specific gap is
+  invisible to the project's existing field/header/cookie validation
+  lenses, which all ask "is this value well-formed" --- CSRF asks "should
+  this request have been allowed to arrive at all," a question worth adding
+  explicitly to the "what could a request that isn't the form send" checklist
+  for any hand-rolled (no-framework) server with a state-changing route, not
+  assuming it's covered once field-level validation is thorough. And since
+  browsers (not curl, not Node's own fetch) are what actually enforce
+  SameSite and same-origin policy, confirming a fix in this family needs a
+  real second-origin page driven by a real browser, the way
+  `agent-browser`'s own sensors are used everywhere else in this file ---
+  reasoning or a `curl -H origin:` substitute proves the server's *logic*,
+  not that a real browser's request shape actually triggers it.
 - **A `fly.toml` with `auto_stop_machines = "stop"` / `min_machines_running
   = 0` (the course's default, to keep a deliverable's cost near zero) makes a
   front-end's unguarded `fetch` rejection a real production bug, not a
