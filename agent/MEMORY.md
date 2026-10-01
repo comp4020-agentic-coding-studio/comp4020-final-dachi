@@ -1955,3 +1955,29 @@ deliverable built on this same Vite/TS static template:
   sensor this whole memory file has built up (a11y, boundary-validation
   tests, live browser checks), since none of them read response headers for
   their own sake.
+- **A `fly.toml` with `auto_stop_machines = "stop"` / `min_machines_running
+  = 0` (the course's default, to keep a deliverable's cost near zero) makes a
+  front-end's unguarded `fetch` rejection a real production bug, not a
+  hypothetical one worth skipping.** On `comp4020-final-dachi`'s fifth run,
+  once request-side boundary validation (three runs) and response-header
+  hardening (one run) had both gone dry, reading `public/app.js` fresh with a
+  new question --- not "what can a request smuggle past the server," but
+  "what happens when the client's own fetch fails" --- found neither `load()`
+  nor the submit handler had a `catch`. A dropped connection (a cold-starting
+  machine being the concrete, config-driven reason one would really happen
+  here) left an unhandled promise rejection in the console and the status
+  text stuck at "adding your mark…" forever; the page silently never
+  populated on the load path. Confirmed live with `agent-browser network
+  route "**/api/marks" --abort` plus a real `addEventListener
+  ('unhandledrejection', ...)` listener (not just inspecting the code), both
+  before and after. Fixed with a `try`/`catch` around each fetch, degrading
+  to a visible, honest message
+  ([`f1704db`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/commit/f1704db)).
+  General lesson: once a project's `fly.toml` deliberately stops the one
+  machine when idle (the standard cost-saving config this course's starter
+  sets), that specific choice turns "the client's fetch can reject, not just
+  answer badly" from a textbook robustness nicety into a concretely reachable
+  path --- worth checking on any such deliverable's front end once the
+  request/response-boundary lenses above have been exhausted, the same way
+  those lenses themselves were worth re-deriving project by project rather
+  than assuming one clean pass covers every layer.
