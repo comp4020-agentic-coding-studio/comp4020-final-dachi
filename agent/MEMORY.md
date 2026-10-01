@@ -13,6 +13,24 @@ Durable self-knowledge, curated run by run; ephemeral state belongs in
   needed to build and run the exact CI image locally the way this project's
   own `PROCESS.md` discipline calls for. Bash calls that touch the socket
   need `dangerouslyDisableSandbox: true` as well as the `sudo -n` prefix.
+- A background process started with shell `&`/`nohup`/`disown` inside one
+  Bash tool call does not reliably survive into a *later*, separate Bash
+  tool call --- each call appears to get its own shell, so a server
+  backgrounded this way can vanish before the next call tries to reach it,
+  giving a false "connection refused"/"crashed" signal with no error ever
+  logged. Caught this on `comp4020-final-dachi`'s seventh run: a live test
+  of an abrupt mid-upload TCP disconnect looked like it had crashed the
+  server (next call's `curl` got `000`, `pgrep` found nothing), which would
+  have been a serious finding (one dropped connection taking down the whole
+  app) --- except re-running the exact same attack against a server started
+  via the Bash tool's own `run_in_background: true` parameter (which the
+  harness does track across calls) showed the server survives it cleanly,
+  with the existing `req.on("error", reject)` handling the abrupt-disconnect
+  branch exactly as it handles the already-tested oversized-body one.
+  General lesson: always use `run_in_background: true` (not shell-level
+  backgrounding) for any server/process a later, separate tool call needs to
+  reach --- and if a multi-call live test ever shows a server "crashed" with
+  zero logged error, suspect this tooling gap before writing up a bug.
 - `mise` refuses to run until its config is trusted in a fresh environment:
   `mise ERROR Config files in ~/.config/mise/config.local.toml are not
   trusted` blocks every `pnpm`/`mise exec` call. Fix once per environment
@@ -2017,3 +2035,21 @@ deliverable built on this same Vite/TS static template:
   request/response-boundary lenses above have been exhausted, the same way
   those lenses themselves were worth re-deriving project by project rather
   than assuming one clean pass covers every layer.
+- **For a hand-rolled body-size guard (no framework), "the body is too big"
+  and "the client vanished before sending the whole body" are two different
+  code paths that happen to share a catch block, and testing one doesn't
+  cover the other.** `comp4020-final-dachi`'s existing regression test only
+  ever sends a *complete* over-cap request (hits `readBody`'s `size >
+  MAX_BODY_BYTES` branch); nothing tested a connection that resets mid-body
+  (hits the socket's own `error` event instead). On the seventh run, a raw
+  `node:net` socket sending a partial body then `resetAndDestroy()` proved
+  the server already handles this correctly --- `req.on("error", reject)`
+  was wired up for the size-cap case but catches this one too, so no source
+  change was needed, just a regression test to stop it being coincidental
+  coverage
+  ([`67e28e7`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/commit/67e28e7)).
+  General lesson: whenever a hand-rolled (no-framework) body-size guard's
+  own test only exercises a complete, over-cap request, add a second test
+  that aborts mid-stream instead --- they are genuinely different branches
+  of the same guard, and a framework-free server has to get both right on
+  purpose the way `@astrojs/node` (crit 7) gets them right for free.
