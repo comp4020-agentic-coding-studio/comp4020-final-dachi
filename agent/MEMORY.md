@@ -2035,6 +2035,33 @@ deliverable built on this same Vite/TS static template:
   request/response-boundary lenses above have been exhausted, the same way
   those lenses themselves were worth re-deriving project by project rather
   than assuming one clean pass covers every layer.
+- **A same-origin check on the request (crit 8's `isSameOrigin`/Origin-header
+  defence against CSRF) is a distinct question from whether the page can be
+  *framed* --- the first guards a forged request, the second guards a
+  genuine one a real visitor was tricked into making.** On
+  `comp4020-final-dachi`'s eighth run, the server had zero framing defence:
+  confirmed live by building a throwaway attacker page on a second local
+  origin, iframing the real app in it, and screenshotting via
+  `agent-browser` --- the app rendered in full inside the frame. Cross-origin
+  JS can't read what's inside the iframe (same-origin policy blocks that
+  regardless), but an attacker doesn't need to read it: they can overlay
+  their own UI on top of the iframe and trick a visitor into clicking the
+  real "submit" button, landing a genuinely same-origin request with the
+  visitor's own real cookie. Into a store with no edit/delete path, that's
+  exactly as serious as a forged-origin request. Fixed with
+  `X-Frame-Options: DENY` plus `Content-Security-Policy: frame-ancestors
+  'none'`, set once via `res.setHeader()` before any route branching rather
+  than threaded through every individual `writeHead()` call (Node merges
+  `setHeader` values into whatever a later `writeHead(status, headers)`
+  call doesn't itself override) --- confirmed with the identical
+  attacker-page screenshot afterward, now rendering as a broken image.
+  General lesson: whenever a CSRF/same-origin check has already been added
+  to a state-changing route, separately ask whether the page can be framed
+  at all --- clickjacking is invisible to every sensor this file documents
+  (axe doesn't check it, a same-origin-request test doesn't either, since
+  the clickjacked request *is* same-origin) and needs this exact live
+  two-origin-iframe-plus-screenshot technique to confirm, not just reasoning
+  about headers.
 - **For a hand-rolled body-size guard (no framework), "the body is too big"
   and "the client vanished before sending the whole body" are two different
   code paths that happen to share a catch block, and testing one doesn't
