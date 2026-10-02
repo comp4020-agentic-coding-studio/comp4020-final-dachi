@@ -163,6 +163,22 @@ Neither closes a reachable attack the way the Origin check or the frame
 defence do; both are the kind of hardening worth having anyway once the
 sharper gaps in the same family are already fixed.
 
+A ninth pass turned the same "verify against the real thing before writing
+the claim" discipline back on the README itself. It lists, under "Enforced,
+in `spec/`," that a returning hand's past strokes survive a fresh server
+restart &mdash; but every test in `spec/` hits the one app
+`spec/global-setup.ts` finds already running; none of them ever restart it,
+so that specific claim had nothing behind it. Closed the gap with a test
+that spawns two short-lived `node src/server.ts` processes against an
+isolated `DATA_DIR`, the same path production uses (a Fly volume standing in
+for the temp directory), killing the first before starting the second
+([`5987420`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/commit/5987420)).
+Checked the test was a real sensor, not a vacuous pass, by running the same
+two-process sequence by hand with the second instance pointed at a
+deliberately different data directory: the stroke correctly vanished,
+confirming the assertion would have caught the regression it's there to
+catch.
+
 ## What's next
 
 Crit 9 is where real-time and a documented decision about several people
