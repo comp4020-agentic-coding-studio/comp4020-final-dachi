@@ -130,6 +130,25 @@ regression test
 ([`67e28e7`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/commit/67e28e7))
 that now pins the behaviour down rather than leaving it to coincidence.
 
+A seventh pass asked a question none of the five before it had: not what a
+request can carry, but what a genuine request, from a real visitor's own
+browser, can be tricked into doing. The server had no defence against being
+loaded inside another site's `<iframe>` at all. Confirmed live: a plain
+cross-origin page embedding this app's `/` rendered it in full, no frame-
+busting of any kind. Cross-origin JS can't read what's inside that frame,
+but it doesn't need to &mdash; an attacker can overlay their own UI on top of
+the iframe and trick a visitor into clicking "Add to the scroll" believing
+they're clicking something else, landing a stroke under that visitor's own
+real `hand` cookie. The Origin check from the fourth pass doesn't catch
+this: the request is genuinely same-origin, made by the real page, with a
+real cookie &mdash; only the click that triggered it was misdirected. Into a
+store with no edit or delete path, that is exactly as serious as the forged-
+origin gap it sits beside. Fixed with `X-Frame-Options: DENY` and a
+`Content-Security-Policy: frame-ancestors 'none'` on every response
+([`70cc828`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/commit/70cc828)),
+re-confirmed against the same attacker page: the frame now renders as a
+broken image, nothing inside it.
+
 ## What's next
 
 Crit 9 is where real-time and a documented decision about several people
