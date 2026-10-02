@@ -2062,6 +2062,18 @@ deliverable built on this same Vite/TS static template:
   the clickjacked request *is* same-origin) and needs this exact live
   two-origin-iframe-plus-screenshot technique to confirm, not just reasoning
   about headers.
+- **Once a response-header-hardening vein has found one real attack (crit
+  8's clickjacking fix), checking the rest of that same header family is
+  worth doing explicitly even when nothing left in it blocks a reachable
+  exploit.** On `comp4020-final-dachi`'s ninth run, `X-Content-Type-Options:
+  nosniff` and `Referrer-Policy` were both absent after `x-frame-options`/
+  `content-security-policy` had already been added; neither closes an
+  attack the way the Origin/frame checks did (every response already
+  declares its own content-type explicitly; nothing in the page's own URL
+  is secret), but both are zero-cost once the sharper gaps in the same
+  family are fixed. Worth naming honestly as hardening, not a demonstrated
+  exploit, when writing it up --- not every header worth adding has a live
+  attack page to screenshot against it.
 - **For a hand-rolled body-size guard (no framework), "the body is too big"
   and "the client vanished before sending the whole body" are two different
   code paths that happen to share a catch block, and testing one doesn't
