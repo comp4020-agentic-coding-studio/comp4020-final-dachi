@@ -110,6 +110,15 @@ const server = createServer(async (req, res) => {
     // anything, so refuse it outright, both ways browsers check for it.
     res.setHeader("x-frame-options", "DENY");
     res.setHeader("content-security-policy", "frame-ancestors 'none'");
+    // Every response already sets its own content-type explicitly, but
+    // nosniff is a one-line guard against a browser second-guessing it (MIME
+    // sniffing a response into a type it was never served as) at zero cost
+    // here. Referrer-Policy matters because this page links out (the source
+    // repo, the README's own cited essays): without it, a click carries this
+    // app's full URL as the Referer header to whatever site a visitor lands
+    // on next. Neither URL is secret, but there's no reason to send it either.
+    res.setHeader("x-content-type-options", "nosniff");
+    res.setHeader("referrer-policy", "no-referrer");
 
     const url = new URL(req.url ?? "/", "http://localhost");
 

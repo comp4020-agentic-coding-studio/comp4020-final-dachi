@@ -191,6 +191,18 @@ it("refuses to be framed, on every response, not just the API", async () => {
   }
 });
 
+it("sets nosniff and no-referrer on every response, not just the frame headers", async () => {
+  for (const path of ["/", "/readme/", "/api/marks"]) {
+    const res = await fetch(new URL(path, baseUrl));
+    expect(res.headers.get("x-content-type-options"), `${path} is missing nosniff`).toBe(
+      "nosniff",
+    );
+    expect(res.headers.get("referrer-policy"), `${path} is missing a referrer-policy`).toBe(
+      "no-referrer",
+    );
+  }
+});
+
 it("answers 404 for a route that isn't part of the app", async () => {
   const res = await fetch(new URL("/not-a-real-route", baseUrl));
   expect(res.status).toBe(404);
