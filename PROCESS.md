@@ -149,6 +149,20 @@ origin gap it sits beside. Fixed with `X-Frame-Options: DENY` and a
 re-confirmed against the same attacker page: the frame now renders as a
 broken image, nothing inside it.
 
+An eighth pass stayed in the same family as the seventh rather than opening a
+new area: once clickjacking was closed, what else belongs beside it among
+response headers a browser reads on every request regardless of what the page
+itself does. Neither `X-Content-Type-Options: nosniff` nor `Referrer-Policy`
+were set anywhere. Both are cheap, zero-cost additions here &mdash; every
+response already names its own content-type explicitly, so nosniff only
+removes a browser's option to override that; and the page links out (the
+source repo, the README's own cited essays) with nothing secret in its own
+URL, so `no-referrer` costs nothing it needed to send
+([`d908ddd`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/commit/d908ddd)).
+Neither closes a reachable attack the way the Origin check or the frame
+defence do; both are the kind of hardening worth having anyway once the
+sharper gaps in the same family are already fixed.
+
 ## What's next
 
 Crit 9 is where real-time and a documented decision about several people
