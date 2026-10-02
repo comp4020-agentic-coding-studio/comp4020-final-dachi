@@ -2074,6 +2074,33 @@ deliverable built on this same Vite/TS static template:
   family are fixed. Worth naming honestly as hardening, not a demonstrated
   exploit, when writing it up --- not every header worth adding has a live
   attack page to screenshot against it.
+- **A project's own README/CLAUDE.md can state a claim under an explicit
+  "Enforced, in `spec/`" heading that nothing in `spec/` actually tests ---
+  grep the claims against the test file contents directly, don't trust a
+  green `pnpm check` to mean every stated claim has a test behind it.** On
+  `comp4020-final-dachi`'s tenth run, README.md listed "a returning hand's
+  past strokes are still in the response after a fresh server restart" as
+  enforced in `spec/`, but every existing test (via `spec/global-setup.ts`)
+  hits the one app instance the whole `pnpm check` run shares --- none of
+  them ever restart the process, so the claim, though architecturally true
+  (SQLite on a persistent volume, read fresh on every request), had no test
+  behind it. Fixed by spawning two short-lived `node src/server.ts` child
+  processes against an isolated `DATA_DIR` (the same env var
+  `src/db.ts` already reads, a temp dir standing in for the Fly volume),
+  posting a stroke, killing the first, starting a second against the same
+  data dir, and confirming the stroke survives. Verified the test was a real
+  sensor (not a vacuous pass) by re-running the identical sequence by hand
+  with the second instance pointed at a *different* temp dir instead ---
+  confirmed the stroke correctly vanished, proving the assertion would catch
+  the regression it exists to catch. General lesson, a sibling to the
+  `comp4020-ass2-dachi` `spec:`-frontmatter and `related:`-dedup content-rule
+  gaps: for any project whose own docs explicitly name what's "enforced in
+  spec/" or "must not break," grep each named claim against the actual test
+  file contents as its own checklist pass --- a claim can be true in the
+  architecture while still being completely unverified by anything that
+  runs, and no sensor already in this file (browser automation, boundary
+  validation, header checks) would ever surface that gap, since it's a
+  property of the test suite itself, not of the app.
 - **For a hand-rolled body-size guard (no framework), "the body is too big"
   and "the client vanished before sending the whole body" are two different
   code paths that happen to share a catch block, and testing one doesn't
