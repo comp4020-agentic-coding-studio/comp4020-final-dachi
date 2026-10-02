@@ -99,6 +99,18 @@ async function serveStatic(res: ServerResponse, filename: string, contentType: s
 
 const server = createServer(async (req, res) => {
   try {
+    // Cross-origin JS can't read a framed page's content, but it can still
+    // render it under an attacker's own layout and trick a real visitor into
+    // clicking "Add to the scroll" believing they're clicking something
+    // else — confirmed live by embedding this app in a plain cross-origin
+    // iframe with no defence of any kind in place. The Origin check above
+    // guards a forged request; it does nothing for a genuine one a visitor
+    // was tricked into making with their own real hand cookie, into a store
+    // with no edit or delete path. This app never needs to be framed by
+    // anything, so refuse it outright, both ways browsers check for it.
+    res.setHeader("x-frame-options", "DENY");
+    res.setHeader("content-security-policy", "frame-ancestors 'none'");
+
     const url = new URL(req.url ?? "/", "http://localhost");
 
     if (req.method === "GET" && url.pathname === "/") {

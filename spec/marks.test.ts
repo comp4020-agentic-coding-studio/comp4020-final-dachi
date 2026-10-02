@@ -177,6 +177,20 @@ it("survives a client that vanishes mid-upload, not just an oversized one", asyn
   expect(health.status).toBe(200);
 });
 
+it("refuses to be framed, on every response, not just the API", async () => {
+  // A forged Origin is already rejected above; framing is a different attack
+  // — a genuine request, with a genuine visitor's own cookie, that they were
+  // tricked into making by a page overlaying the real UI inside an iframe.
+  for (const path of ["/", "/readme/", "/api/marks"]) {
+    const res = await fetch(new URL(path, baseUrl));
+    expect(res.headers.get("x-frame-options"), `${path} is missing x-frame-options`).toBe("DENY");
+    expect(
+      res.headers.get("content-security-policy"),
+      `${path} is missing a frame-ancestors CSP`,
+    ).toBe("frame-ancestors 'none'");
+  }
+});
+
 it("answers 404 for a route that isn't part of the app", async () => {
   const res = await fetch(new URL("/not-a-real-route", baseUrl));
   expect(res.status).toBe(404);
