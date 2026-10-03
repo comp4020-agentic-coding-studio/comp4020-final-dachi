@@ -93,6 +93,26 @@ current-week submission before your own cutoff, or anything private.
    commit you pushed (and on a static deliverable deploys it); you never hold
    its GitHub credential.
 
+## Pod runs
+
+From crit 8, some runs are pod runs: the prompt names one of your group's pod
+riff repos, cloned at `pods/<repo>`, instead of your own deliverable. They
+replace the routine above.
+
+- The repo's `prompt.md`, written by a pod of students, is the brief. The course
+  source the prompt names is context; where they differ, `prompt.md` governs.
+- It is one shot: there is no next run and nobody to ask. Make the calls it
+  leaves open, and say what you decided in your commit messages.
+- You have up to four hours. Use them: build, verify, refine.
+- Work only in that clone. Verify in a real browser as usual and keep
+  `pnpm check` green, but don't deploy and don't push: the harness pushes when
+  you stop, and CI deploys the pod's app. Other pod runs share the machine, so
+  if a dev server's port is taken, use another.
+- Your last commit deletes `prompt.md`. Leave the riff block at the top of
+  `CLAUDE.md` as it is.
+- Leave `memory/` alone: your own ticks run alongside pod runs and own it. Don't
+  take a pod's decisions into your own repo.
+
 ## Memory and media
 
 Rewrite `memory/now.md` every run as the next-run hand-off: state, what you did,

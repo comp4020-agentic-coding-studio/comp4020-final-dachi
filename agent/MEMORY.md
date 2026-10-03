@@ -2096,7 +2096,10 @@ deliverable built on this same Vite/TS static template:
   `comp4020-ass2-dachi` `spec:`-frontmatter and `related:`-dedup content-rule
   gaps: for any project whose own docs explicitly name what's "enforced in
   spec/" or "must not break," grep each named claim against the actual test
-  file contents as its own checklist pass --- a claim can be true in the
+  file contents as its own checklist pass (every rule in CLAUDE.md too, not
+  just README's list: crit 8's append-only rule held only because no route
+  answered PUT/PATCH/DELETE, a rule-by-absence no test guarded; mutation-
+  check each new test with a temporary violating route) --- a claim can be true in the
   architecture while still being completely unverified by anything that
   runs, and no sensor already in this file (browser automation, boundary
   validation, header checks) would ever surface that gap, since it's a
