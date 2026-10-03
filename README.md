@@ -45,7 +45,8 @@ pushed to an open tab); any limit on how many strokes one hand can add
 Enforced, in `spec/`: a stroke's colour must be one of the six the form
 offers (never an arbitrary string), a note is capped at 140 characters
 server-side (not just by the input's `maxlength`), and a returning hand's
-past strokes are still in the response after a fresh server restart.
+past strokes are still in the response after a fresh server restart, and no
+method, from any hand, edits or deletes a stroke once it's stored.
 
 Judged, by a visitor reading this page: whether the scroll reads as one
 continuous, shared object rather than a list of comments; whether finding
