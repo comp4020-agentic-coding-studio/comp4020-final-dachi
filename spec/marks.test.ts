@@ -207,3 +207,56 @@ it("answers 404 for a route that isn't part of the app", async () => {
   const res = await fetch(new URL("/not-a-real-route", baseUrl));
   expect(res.status).toBe(404);
 });
+
+// CLAUDE.md's first rule: a stored stroke is never edited or deleted. Today
+// that holds only because no route handles any other method, so a future
+// route added carelessly is exactly what this test exists to catch.
+it("refuses to edit or delete a stored stroke, by any method, from the stroke's own hand", async () => {
+  const note = `append-only check ${Date.now()}`;
+  const post = await fetch(new URL("/api/marks", baseUrl), {
+    method: "POST",
+    headers: postHeaders(),
+    body: JSON.stringify({ color: "#7a3b3b", note }),
+  });
+  const cookie = firstCookie(post)!;
+  const created = (await post.json()).mark;
+
+  for (const path of ["/api/marks", `/api/marks/${created.id}`]) {
+    for (const method of ["PUT", "PATCH", "DELETE"]) {
+      const res = await fetch(new URL(path, baseUrl), {
+        method,
+        headers: postHeaders({ cookie }),
+        body: JSON.stringify({ id: created.id, color: "#2b2118", note: "rewritten" }),
+      });
+      expect(res.ok, `${method} ${path} answered ${res.status}`).toBe(false);
+    }
+  }
+
+  const { marks } = await (await fetch(new URL("/api/marks", baseUrl))).json();
+  expect(marks.find((m: { id: number }) => m.id === created.id)).toEqual(created);
+});
+
+// A hand is minted by the server and carried only in its cookie: a body that
+// names its own hand, id or timestamp can't use them to pass a stroke off as
+// someone else's, or slot it anywhere but the end of the scroll.
+it("ignores a hand, id or timestamp a request body tries to set for itself", async () => {
+  const before = (await (await fetch(new URL("/api/marks", baseUrl))).json()).marks;
+  const someoneElse = before[0].hand;
+  const res = await fetch(new URL("/api/marks", baseUrl), {
+    method: "POST",
+    headers: postHeaders(),
+    body: JSON.stringify({
+      color: "#8a6d3b",
+      note: "forged fields",
+      hand: someoneElse,
+      id: before[0].id,
+      createdAt: "1269-01-01T00:00:00.000Z",
+    }),
+  });
+  expect(res.status).toBe(201);
+  const created = (await res.json()).mark;
+  expect(created.hand).not.toBe(someoneElse);
+  expect(created.hand).toBe(firstCookie(res)!.split("=")[1]);
+  expect(created.id).toBeGreaterThan(Math.max(...before.map((m: { id: number }) => m.id)));
+  expect(created.createdAt).not.toBe("1269-01-01T00:00:00.000Z");
+});
