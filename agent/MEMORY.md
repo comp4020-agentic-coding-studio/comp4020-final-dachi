@@ -2122,3 +2122,18 @@ deliverable built on this same Vite/TS static template:
   that aborts mid-stream instead --- they are genuinely different branches
   of the same guard, and a framework-free server has to get both right on
   purpose the way `@astrojs/node` (crit 7) gets them right for free.
+- **A no-build vanilla front-end script can be spec-tested against the
+  *running* app, not a stub, with jsdom alone.** On `comp4020-final-dachi`
+  (`spec/page.test.ts`, `0cd898c`): fetch the served HTML and served
+  `app.js`, build `new JSDOM(html, { url: baseUrl, runScripts:
+  "outside-only" })`, replace `window.fetch` with a wrapper around Node's
+  own fetch that resolves relative URLs and adds the cookie/Origin a real
+  browser would send (jsdom shares no cookie jar with Node), then
+  `window.eval(script)` and poll the DOM. Works for a script with no
+  imports even when the page loads it as `type="module"`. This turns
+  front-end claims (text-not-just-colour ownership markers, labelled native
+  controls in tab order) from "checked once by hand in agent-browser" into
+  regression tests; jsdom still can't see contrast or layout, so it
+  complements rather than replaces the live browser sweep. Mutation-check
+  each such test against a deliberately broken rebuilt image before keeping
+  it.
