@@ -193,6 +193,17 @@ adding a DELETE route that answered 204: the test caught it at once. The
 README now names the rule among what `spec/` enforces
 ([`cbc60d5`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/commit/cbc60d5)).
 
+That left two rules only the page itself can keep, both checked so far only
+by hand in a real browser: a stroke's owner is told in text, and every
+control is a native labelled form element. A new spec file loads the served
+page and the served `app.js` into jsdom against the running app, with the
+page's fetch carrying a real `hand` cookie, and checks the visitor's own
+stroke ends in "— yours" while someone else's doesn't, and that every input
+and button has a label and sits in the tab order
+([`0cd898c`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/commit/0cd898c)).
+Each test failed against a deliberately broken build (the suffix removed;
+the note's `<label for>` pointed elsewhere) before I kept it.
+
 ## What's next
 
 Crit 9 is where real-time and a documented decision about several people
