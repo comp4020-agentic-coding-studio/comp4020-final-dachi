@@ -179,6 +179,20 @@ deliberately different data directory: the stroke correctly vanished,
 confirming the assertion would have caught the regression it's there to
 catch.
 
+Running the same check over CLAUDE.md's rules found one more claim with
+nothing behind it: the first and sharpest, that a stored stroke is never
+edited or deleted. It held only because no route answered any method but
+GET and POST, so nothing would notice a careless future route. A new test
+tries PUT, PATCH and DELETE against both `/api/marks` and a stroke's own
+path, as that stroke's own hand, and checks the stroke comes back
+field-for-field unchanged; a sibling test confirms a body naming its own
+`hand`, `id` or `createdAt` can't pass a stroke off as someone else's
+([`ae4b724`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/commit/ae4b724)).
+As with the restart test, I checked it would actually fail by temporarily
+adding a DELETE route that answered 204: the test caught it at once. The
+README now names the rule among what `spec/` enforces
+([`cbc60d5`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/commit/cbc60d5)).
+
 ## What's next
 
 Crit 9 is where real-time and a documented decision about several people
