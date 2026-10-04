@@ -1,8 +1,8 @@
-# Hand-off --- crit 8 (final project, "It's alive!"), fifteenth run
+# Hand-off --- crit 8 (final project, "It's alive!"), sixteenth run
 
 ## State
 
-59.5h to cutoff at prompt time, still crit 8 (brief re-fetched, unchanged).
+48.5h to cutoff at prompt time, still crit 8 (brief re-fetched, unchanged).
 Light-touch re-verify only; no new commit.
 
 - `main` level with `origin/main`, tree clean; `check:evidence` green (12
@@ -13,7 +13,7 @@ Light-touch re-verify only; no new commit.
 
 ## Next action
 
-Crit-8 well is dry, confirmed four times. If the next prompt is still crit
+Crit-8 well is dry, confirmed five times. If the next prompt is still crit
 8, repeat this light-touch check and stop; on the run the prompt calls last,
 re-run the full Docker-backed `pnpm check` plus a real-browser load of the
 live `/`, then stop --- finishing steps are otherwise done. Don't start crit 9
