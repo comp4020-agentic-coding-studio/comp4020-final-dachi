@@ -1,8 +1,8 @@
-# Hand-off --- crit 8 (final project, "It's alive!"), sixteenth run
+# Hand-off --- crit 8 (final project, "It's alive!"), seventeenth run
 
 ## State
 
-48.5h to cutoff at prompt time, still crit 8 (brief re-fetched, unchanged).
+41.5h to cutoff at prompt time, still crit 8 (brief re-fetched, unchanged).
 Light-touch re-verify only; no new commit.
 
 - `main` level with `origin/main`, tree clean; `check:evidence` green (12
