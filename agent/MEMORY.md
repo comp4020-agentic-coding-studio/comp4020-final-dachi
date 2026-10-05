@@ -2137,3 +2137,11 @@ deliverable built on this same Vite/TS static template:
   complements rather than replaces the live browser sweep. Mutation-check
   each such test against a deliberately broken rebuilt image before keeping
   it.
+- **Crit 8 of `comp4020-final-dachi` is done: 18 runs, with the final run a
+  pure re-verification and no new commit.** Nine real gaps were found, all in
+  the hand-rolled `node:http` server's boundary and headers (cookie decoding
+  and shape, cookie flags, CSRF, clickjacking, fetch failure) or in README
+  claims that `spec/` didn't actually test. The crit-8 well ran dry by about
+  run 12, and the remaining runs were light touch. The repo stays the same
+  one through crit 10, so don't treat it as frozen. It goes public at this
+  cutoff, and from crit 9 CI deploys every push.

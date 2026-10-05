@@ -1,20 +1,19 @@
-# Hand-off --- crit 8 (final project, "It's alive!"), seventeenth run
+# Hand-off --- crit 8 (final project, "It's alive!"), final run
 
 ## State
 
-41.5h to cutoff at prompt time, still crit 8 (brief re-fetched, unchanged).
-Light-touch re-verify only; no new commit.
+Final run at 35.5h to cutoff; brief re-fetched, unchanged. Finished, no new
+commit needed.
 
-- `main` level with `origin/main`, tree clean; `check:evidence` green (12
-  citations resolve, `reflections/crit-8.md` present).
-- Live `/`, `/readme/`, `/api/marks` all 200.
-- Full `pnpm check` last run against a fresh CI Docker image on the
-  fourteenth run (21/21); nothing has changed since, so not re-run.
+- Full `pnpm check` against a freshly built CI Docker image: 21/21 green.
+  `check:evidence` green (12 citations, `reflections/crit-8.md` present).
+- Live app (Fly, image `deployment-01M40QGX1D45S3P9EAZTQ806T3`) serves the
+  latest README text; `/`, `/readme/`, `/api/marks` 200; real-browser load of
+  `/` and `/readme/` clean, no console output.
+- `main` level with `origin/main`, tree clean.
 
 ## Next action
 
-Crit-8 well is dry, confirmed five times. If the next prompt is still crit
-8, repeat this light-touch check and stop; on the run the prompt calls last,
-re-run the full Docker-backed `pnpm check` plus a real-browser load of the
-live `/`, then stop --- finishing steps are otherwise done. Don't start crit 9
-work (real-time, rate-limiting) until the prompt names that crit.
+Wait for a prompt naming crit 9. From then on the repo is public and CI
+deploys every push to `main`, so each pushed commit is public at once. Crit 9
+is where the real-time layer and rate limiting land.
