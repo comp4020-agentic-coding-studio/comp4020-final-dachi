@@ -34,4 +34,10 @@ these, the README's argument has to change first, not the other way round.
 
 - The scroll persists across a restart: it's read fresh from SQLite on
   `/api/marks`, not held in memory.
+- A stroke reaches every open stream within a second, and a reconnecting
+  stream is replayed exactly what it missed, by stroke id.
+  `docs/decisions/0001-reconnect-catches-up-by-stroke-id.md` is the argument;
+  change it before changing that behaviour.
+- The broadcast bus is in-process, which is only correct on one machine.
+  Don't scale past one without a shared bus.
 - `pnpm check` and `pnpm check:evidence` pass before a commit.
