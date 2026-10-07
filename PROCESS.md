@@ -26,7 +26,8 @@ survive a container restart, not just a page reload); real-time is
 deliberately not built yet, because the brief stages it at the next crit
 ("All at once") and building it now, with nothing yet to test the several-
 viewers story against, would have been work with no way to verify it was the
-right call.
+right call. Crit 9 built it, against exactly that story; see
+"Crit 9: all at once" below.
 
 ## Stack, and the trade-offs
 
@@ -204,13 +205,57 @@ and button has a label and sits in the tab order
 Each test failed against a deliberately broken build (the suffix removed;
 the note's `<label for>` pointed elsewhere) before I kept it.
 
+## Crit 9: all at once
+
+Before building anything live, I re-read what `/api/marks` already sent,
+because a broadcast would push the same shape to every open tab. It included
+every stroke's `hand`, the cookie value that *is* a visitor's identity. Anyone
+could copy someone else's into their own cookie, post as them, and be told
+their strokes were "yours". That undid crit 8's `HttpOnly` fix from the other
+side, since the token was published in the JSON while hidden from scripts.
+The spec had even read one test's "someone else's hand" straight out of the
+listing. The fix sends a per-requester `yours` flag instead, and a new test
+checks no response carries a hand at all
+([`606eaae`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/commit/606eaae)). This had to land first: a live stream would
+otherwise have broadcast each new hand to every open tab the moment it was
+minted.
+
+The live layer is server-sent events from the plain `node:http` server
+([`a217a9e`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/commit/a217a9e)). It needs no library: each open tab is one
+response held in an in-process set, which is correct because the app runs on
+exactly one machine. The decision the brief asks for sits above that, and I
+grounded it in the README's "coming back is worth it". A tab that drops off
+(a sleeping phone, a cold start, a redeploy, which is now every push) is
+replayed exactly the strokes it missed, by stroke id, using the browser's own
+`Last-Event-ID`. The alternatives (best-effort live, refetching everything,
+polling) and what each costs are in the decision record
+([`ed8e4b9`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/commit/ed8e4b9)).
+
+Three corrections shaped this, and each came from a sensor rather than from
+reading the code. A mutation check (remove the broadcast, rebuild, rerun)
+failed after five seconds instead of one, which exposed that Node holds
+response headers back until the first body write. On a quiet scroll, a new
+tab's stream wouldn't have opened, or shown as live, until the 25-second
+heartbeat. An initial `retry:` frame fixed it, and the test's stream reader
+now times out on headers too. Then two real browser sessions on the CI image
+showed a first-time visitor's own first stroke without "— yours". Their stream
+opened before their hand existed, and its copy beat the POST's response to
+the page. The page now lets a copy that says `yours` replace one that
+doesn't. The jsdom page test missed the race at first, because over
+localhost the response always won, so it now holds the response back to force
+the order Chrome showed. With the fix removed, that test fails
+([`368269c`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/commit/368269c)). Finally, repeated `pnpm check` runs went
+intermittently red, and that had two causes. One was my replay test assuming
+no other spec file posted between its strokes. The other was a genuine O(n²)
+in `insertMark`, which scanned the whole list for every stroke and timed out
+in jsdom once the test database passed 600 strokes. Fifteen consecutive green
+runs followed the fix.
+
 ## What's next
 
-Crit 9 is where real-time and a documented decision about several people
-acting at once are due; crit 10 adds server-side logging. Both build on what
-this crit ships rather than replace it: the schema, the validation, and the
-append-only argument in this README are the foundation, not a placeholder to
-be rewritten away. What I expect to revisit hardest by crit 9 is the
-no-rate-limit choice &mdash; fine for a handful of known visitors, and the
-first thing worth re-arguing once the scroll has to hold up with several
-people adding strokes in the same few seconds.
+Crit 10 adds server-side logging. The stream is the first part of the app
+that holds state between requests (a set of open responses), so it's the
+first thing worth logging: connections opened and closed, replays sent, and
+the 503 a visitor gets past the stream cap. The no-rate-limit choice is still
+open. The scroll is now live in front of a pod writing at once, and that's
+the first time it will be tested.
