@@ -188,11 +188,15 @@ function connect() {
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
+  // A double click or a second Enter mustn't leave the stroke twice on a
+  // scroll that never forgets; held is set for exactly as long as a post is.
+  if (held) return;
   const color = new FormData(form).get("color");
   const note = noteInput.value;
 
   statusEl.textContent = "adding your mark…";
   let res;
+  let mark;
   held = [];
   try {
     res = await fetch("/api/marks", {
@@ -200,6 +204,7 @@ form.addEventListener("submit", async (event) => {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ color, note }),
     });
+    if (res.ok) ({ mark } = await res.json());
   } catch {
     releaseHeld(null);
     statusEl.textContent = "that mark couldn't be added — check your connection and try again.";
@@ -214,7 +219,6 @@ form.addEventListener("submit", async (event) => {
 
   noteInput.value = "";
   statusEl.textContent = "added to the scroll.";
-  const { mark } = await res.json();
   insertMark(mark);
   releaseHeld(mark.id);
   updateWelcome();

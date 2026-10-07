@@ -188,3 +188,24 @@ it("still announces another hand's stroke that arrives while your own post is in
   expect(heard.some((text) => text.includes(theirs))).toBe(true);
   expect(heard.some((text) => text.includes(mine))).toBe(false);
 });
+
+// The scroll never forgets, so a double click (or Enter pressed twice) while
+// the first post is still in flight must not leave the same stroke twice.
+it("posts once when the form is submitted again before the first post answers", async () => {
+  const doc = await openPage("", { holdPostMs: 300 });
+  await until(() => doc.getElementById("live-state")!.textContent!.startsWith("live"), "the stream to open");
+
+  const mine = `page test, double submit ${randomUUID()}`;
+  (doc.getElementById("note") as HTMLInputElement).value = mine;
+  const button = doc.querySelector<HTMLButtonElement>("#add-mark-form button")!;
+  button.click();
+  button.click();
+
+  await until(
+    () => doc.getElementById("form-status")!.textContent === "added to the scroll.",
+    "the post to finish",
+  );
+  await new Promise((resolve) => setTimeout(resolve, 600));
+  const items = [...doc.querySelectorAll("#scroll li")].filter((li) => li.textContent?.includes(mine));
+  expect(items).toHaveLength(1);
+});
