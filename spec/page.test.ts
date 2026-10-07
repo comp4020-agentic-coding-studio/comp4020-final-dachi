@@ -160,3 +160,31 @@ it("marks a first-time visitor's own first stroke as theirs, even when the strea
   expect(items[0].textContent).toMatch(/ — yours$/);
   expect(announce.textContent).toBe(before);
 });
+
+// Holding this tab's own announcement back while its post is in flight mustn't
+// swallow a stranger's stroke that happens to land in the same window.
+it("still announces another hand's stroke that arrives while your own post is in flight", async () => {
+  const doc = await openPage(await addStroke(`page test, poster ${randomUUID()}`), { holdPostMs: 400 });
+  await until(() => doc.getElementById("live-state")!.textContent!.startsWith("live"), "the stream to open");
+  const heard: string[] = [];
+  const announce = doc.getElementById("scroll-announce")!;
+  new doc.defaultView!.MutationObserver(() => heard.push(announce.textContent ?? "")).observe(announce, {
+    childList: true,
+    characterData: true,
+    subtree: true,
+  });
+
+  const mine = `page test, in flight ${randomUUID()}`;
+  (doc.getElementById("note") as HTMLInputElement).value = mine;
+  doc.querySelector<HTMLButtonElement>("#add-mark-form button")!.click();
+  const theirs = `page test, meanwhile ${randomUUID()}`;
+  await addStroke(theirs);
+
+  await until(
+    () => doc.getElementById("form-status")!.textContent === "added to the scroll.",
+    "the post to finish",
+    2000,
+  );
+  expect(heard.some((text) => text.includes(theirs))).toBe(true);
+  expect(heard.some((text) => text.includes(mine))).toBe(false);
+});

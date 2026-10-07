@@ -27,8 +27,9 @@ const announce = document.getElementById("scroll-announce");
 let lastId = 0;
 const rendered = new Map();
 // While this tab's own post is in flight, its stroke can arrive on the stream
-// first as someone else's; don't announce it to this tab as a stranger's.
-let posting = false;
+// first as someone else's. Stream arrivals wait here until the post answers
+// with its id, so only strangers' strokes get announced.
+let held = null;
 
 function buildPalette() {
   PALETTE.forEach(({ color, name }, i) => {
@@ -122,6 +123,16 @@ function insertMark(mark) {
   return true;
 }
 
+function announceStrokes(marks) {
+  if (marks.length === 1) announce.textContent = `a new stroke: ${marks[0].note || "no note"}`;
+  else if (marks.length > 1) announce.textContent = `${marks.length} new strokes`;
+}
+
+function releaseHeld(ownId) {
+  announceStrokes(held.filter((mark) => mark.id !== ownId));
+  held = null;
+}
+
 function render(marks) {
   scrollList.innerHTML = "";
   rendered.clear();
@@ -163,8 +174,9 @@ function connect() {
   });
   source.addEventListener("mark", (event) => {
     const mark = JSON.parse(event.data);
-    if (insertMark(mark) && !mark.yours && !posting) {
-      announce.textContent = `a new stroke: ${mark.note || "no note"}`;
+    if (insertMark(mark) && !mark.yours) {
+      if (held) held.push(mark);
+      else announceStrokes([mark]);
     }
     updateWelcome();
   });
@@ -181,7 +193,7 @@ form.addEventListener("submit", async (event) => {
 
   statusEl.textContent = "adding your mark…";
   let res;
-  posting = true;
+  held = [];
   try {
     res = await fetch("/api/marks", {
       method: "POST",
@@ -189,21 +201,22 @@ form.addEventListener("submit", async (event) => {
       body: JSON.stringify({ color, note }),
     });
   } catch {
-    posting = false;
+    releaseHeld(null);
     statusEl.textContent = "that mark couldn't be added — check your connection and try again.";
     return;
   }
 
   if (!res.ok) {
-    posting = false;
+    releaseHeld(null);
     statusEl.textContent = "that mark couldn't be added — try a shorter note.";
     return;
   }
 
   noteInput.value = "";
   statusEl.textContent = "added to the scroll.";
-  insertMark((await res.json()).mark);
-  posting = false;
+  const { mark } = await res.json();
+  insertMark(mark);
+  releaseHeld(mark.id);
   updateWelcome();
 });
 
