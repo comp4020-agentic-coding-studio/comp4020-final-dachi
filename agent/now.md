@@ -1,34 +1,29 @@
-# Hand-off --- crit 9 (final project, "All at once"), first run
+# Hand-off --- crit 9 (final project, "All at once"), second run
 
 ## State
 
-161.5h to cutoff at the start of this run; brief fetched
-(`crits/09-all-at-once`): live within ~1s with no reload, one recorded
-multi-user decision, PROCESS.md, `reflections/crit-9.md`.
+155.5h to cutoff at the start of this run. Brief (`crits/09-all-at-once`):
+live within ~1s with no reload, one recorded multi-user decision (ADR 0001,
+done), PROCESS.md, `reflections/crit-9.md` (not yet written, deliberately).
 
-Pushed to `main` (public; CI deployed it), live at `0f265ae`:
+Every spec item except the reflection was already met after run 1. Live at
+`2b62d57` (CI deploys in about 90s after a push).
 
-- `606eaae` stopped `/api/marks` publishing every stroke's `hand` (a bearer
-  token; impersonation was possible). Responses now carry a per-requester
-  `yours` flag. CLAUDE.md rule added.
-- `a217a9e` SSE at `/api/marks/stream`: in-process subscriber set, replay
-  `id > max(Last-Event-ID, ?after=)` before subscribing, 25s heartbeat,
-  500-stream cap, an initial `retry:` frame so the headers flush.
-- `368269c` page: insert by id (Map plus an append fast path), a live or
-  reconnecting line, a polite announce region, first-visit "yours" upgrade.
-- `ed8e4b9` ADR 0001 (reconnect catches up by stroke id). README and
-  CLAUDE.md updated, PROCESS.md has a crit-9 section.
-- Spec is 27 tests (adds `spec/live.test.ts`, `spec/sse.ts`, and two page
-  tests with an EventSource stand-in). Mutation-checked, and 15 consecutive
-  green runs.
-- Live check: two agent-browser sessions on the Fly URL, a stroke in about
-  13ms, "— yours" only on the poster. One permanent sincere stroke ("the first
-  live stroke — all at once") is now on the live scroll.
+## This run
+
+- Asymmetry pass over `public/app.js`'s three arrival paths. The `posting`
+  flag that stopped a tab announcing its own stroke as a stranger's also
+  swallowed any stranger's stroke landing during the post, which on a cold
+  start lasts seconds. Stream arrivals are now held until the post returns
+  its id. Test-first (failed before the fix), checked in real Chrome, and
+  the suite was green 8 runs in a row (`cece9ee`, PROCESS.md `2b62d57`).
+- Fly proxy idle timeout: held a live stream open 80s, saw three 25s
+  heartbeats, no drop. Confirmed clean.
 
 ## Next action
 
-Deepen within crit 9's scope. Candidates nobody has run yet: a live
-multi-device feel check (phone sleep and wake against Fly), whether Fly's
-proxy idle timeout really stays under the 25s heartbeat, and a fresh
-asymmetry pass over `app.js`'s three arrival paths. Don't write
-`reflections/crit-9.md` until much later in the week.
+Keep deepening within crit 9. Still untried: a phone sleep/wake check against
+Fly (agent-browser `set offline` didn't close SSE on crit 7, so this may only
+resolve by reasoning), and what a double submit does while the first post is
+still in flight (a second submit resets `held`; probably harmless, but nobody
+has checked). Hold `reflections/crit-9.md` until later in the week.

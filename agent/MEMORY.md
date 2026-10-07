@@ -2159,6 +2159,16 @@ deliverable built on this same Vite/TS static template:
   the test by holding the POST response back. More generally, when parallel
   spec files share one running app, stream tests must assert properties (ids
   ascending, all past the resume point), never exact event sequences.
+- **A boolean "my request is in flight" flag that suppresses one thing (here,
+  announcing your own stroke) also suppresses everything else that arrives in
+  the same window.** Hold the arrivals and filter them once the response says
+  which one was yours. Cold starts on an auto-stopping Fly machine stretch
+  that window to seconds. To test it, hold the response back and post as a
+  second hand meanwhile. Fly's proxy keeps an idle SSE stream open as long as
+  a 25s heartbeat keeps arriving (checked for 80s).
+- `pkill -f <pattern>` run inside a Bash tool call can match that call's own
+  `zsh -c` command line and kill it (exit 144). Use `pgrep -af` and kill the
+  specific pid instead.
 - **Crit 8 of `comp4020-final-dachi` is done: 18 runs, with the final run a
   pure re-verification and no new commit.** Nine real gaps were found, all in
   the hand-rolled `node:http` server's boundary and headers (cookie decoding
