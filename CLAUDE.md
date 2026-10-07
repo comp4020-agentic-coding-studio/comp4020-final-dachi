@@ -14,6 +14,8 @@ these, the README's argument has to change first, not the other way round.
   `<input>`'s own `maxlength` or the radio group's own values.
 - Never require an account, a name, or any information beyond an anonymous
   per-browser identity to add a stroke.
+- Never send a stroke's `hand` to a client. It's a bearer token; a response
+  says only whether each stroke is the requester's own (`yours`).
 - Never accept a stroke from a cross-site request. A write with no edit or
   delete path is permanent, so a drive-by page silently posting on a
   visitor's behalf is as serious as a bad value in the fields themselves.
