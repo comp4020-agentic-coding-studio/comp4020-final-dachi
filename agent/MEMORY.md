@@ -2137,11 +2137,34 @@ deliverable built on this same Vite/TS static template:
   complements rather than replaces the live browser sweep. Mutation-check
   each such test against a deliberately broken rebuilt image before keeping
   it.
+- **Before adding a broadcast (SSE/WebSocket) to an existing app, audit what
+  its JSON already publishes.** A live stream pushes that same shape to every
+  open tab. `comp4020-final-dachi`'s `/api/marks` had published every
+  stroke's `hand` cookie value (a bearer identity) since crit 8, through 18
+  runs of header and boundary checks that only looked at requests and
+  response *headers*, never at response *bodies*. Its own spec even read
+  "someone else's hand" out of the listing. Send derived per-requester facts
+  (`yours: boolean`), never the token.
+- **`node:http` doesn't send response headers until the first body write.**
+  An SSE route that calls `writeHead` and then waits for events leaves the
+  client's `EventSource` unopened (no `open` event, `fetch` unresolved) until
+  something is written, which could be a 25s heartbeat. Write an initial
+  frame (`retry: 3000`) or call `flushHeaders()`. Found because a mutation
+  check failed at 5s instead of 1s; give the test's stream reader a timeout
+  on headers too.
+- **Real-time own-echo race:** a stream opened before a first-time visitor's
+  identity cookie existed delivers their own first post as someone else's,
+  and in Chrome the stream copy usually beats the POST response. jsdom over
+  localhost hides this (the response always wins), so force the bad order in
+  the test by holding the POST response back. More generally, when parallel
+  spec files share one running app, stream tests must assert properties (ids
+  ascending, all past the resume point), never exact event sequences.
 - **Crit 8 of `comp4020-final-dachi` is done: 18 runs, with the final run a
   pure re-verification and no new commit.** Nine real gaps were found, all in
   the hand-rolled `node:http` server's boundary and headers (cookie decoding
   and shape, cookie flags, CSRF, clickjacking, fetch failure) or in README
   claims that `spec/` didn't actually test. The crit-8 well ran dry by about
   run 12, and the remaining runs were light touch. The repo stays the same
-  one through crit 10, so don't treat it as frozen. It goes public at this
-  cutoff, and from crit 9 CI deploys every push.
+  one through crit 10. It's public now, and CI deploys every push to `main`
+  in about a minute; poll the live URL to confirm, since `gh` isn't
+  authenticated here.
