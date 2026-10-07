@@ -94,11 +94,31 @@ it("remembers a hand across requests, and a returning hand can see its own past 
   const returned = await fetch(new URL("/api/marks", baseUrl), {
     headers: { cookie: cookie! },
   });
-  const { marks, you } = await returned.json();
-  expect(you).toBe(created.hand);
-  expect(marks.some((m: { id: number; hand: string }) => m.id === created.id && m.hand === you)).toBe(
-    true,
-  );
+  const { marks } = await returned.json();
+  expect(marks.find((m: { id: number }) => m.id === created.id)?.yours).toBe(true);
+
+  // and a different browser is told the same stroke isn't theirs
+  const stranger = await (await fetch(new URL("/api/marks", baseUrl))).json();
+  expect(stranger.marks.find((m: { id: number }) => m.id === created.id)?.yours).toBe(false);
+});
+
+// A hand is a bearer token: anyone holding one can post as it and is told its
+// strokes are theirs. The scroll used to publish every stroke's hand, so a
+// visitor could copy anyone's into their own cookie.
+it("never publishes a stroke's hand, to anyone", async () => {
+  const post = await fetch(new URL("/api/marks", baseUrl), {
+    method: "POST",
+    headers: postHeaders(),
+    body: JSON.stringify({ color: "#2b2118", note: "hand stays private" }),
+  });
+  const hand = firstCookie(post)!.split("=")[1];
+  expect(JSON.stringify(await post.json())).not.toContain(hand);
+
+  for (const headers of [{}, { cookie: `hand=${hand}` }] as Record<string, string>[]) {
+    const body = await (await fetch(new URL("/api/marks", baseUrl), { headers })).text();
+    expect(body).not.toContain(hand);
+    expect(body).not.toContain('"hand"');
+  }
 });
 
 it("treats a malformed percent-encoded hand cookie as no hand, not a 500", async () => {
@@ -106,8 +126,8 @@ it("treats a malformed percent-encoded hand cookie as no hand, not a 500", async
     headers: { cookie: "hand=%zz" },
   });
   expect(res.status).toBe(200);
-  const { you } = await res.json();
-  expect(you).toBeNull();
+  const { marks } = await res.json();
+  expect(marks.every((m: { yours: boolean }) => !m.yours)).toBe(true);
 });
 
 it("treats an oversized hand cookie as no hand, not a stored value, and mints a fresh one", async () => {
@@ -119,11 +139,17 @@ it("treats an oversized hand cookie as no hand, not a stored value, and mints a 
   });
   expect(res.status).toBe(201);
   const created = (await res.json()).mark;
-  expect(created.hand).not.toBe(oversized);
-  expect(created.hand.length).toBeLessThan(oversized.length);
 
   const cookie = firstCookie(res);
   expect(cookie, "a fresh hand cookie should be issued when the supplied one is invalid").toBeTruthy();
+  expect(cookie!.length).toBeLessThan(oversized.length);
+
+  const asFresh = await (await fetch(new URL("/api/marks", baseUrl), { headers: { cookie: cookie! } })).json();
+  expect(asFresh.marks.find((m: { id: number }) => m.id === created.id)?.yours).toBe(true);
+  const asOversized = await (
+    await fetch(new URL("/api/marks", baseUrl), { headers: { cookie: `hand=${oversized}` } })
+  ).json();
+  expect(asOversized.marks.find((m: { id: number }) => m.id === created.id)?.yours).toBe(false);
 });
 
 it("rejects a cross-site POST even when every field is otherwise valid", async () => {
@@ -232,7 +258,7 @@ it("refuses to edit or delete a stored stroke, by any method, from the stroke's 
     }
   }
 
-  const { marks } = await (await fetch(new URL("/api/marks", baseUrl))).json();
+  const { marks } = await (await fetch(new URL("/api/marks", baseUrl), { headers: { cookie } })).json();
   expect(marks.find((m: { id: number }) => m.id === created.id)).toEqual(created);
 });
 
@@ -240,8 +266,14 @@ it("refuses to edit or delete a stored stroke, by any method, from the stroke's 
 // names its own hand, id or timestamp can't use them to pass a stroke off as
 // someone else's, or slot it anywhere but the end of the scroll.
 it("ignores a hand, id or timestamp a request body tries to set for itself", async () => {
+  const first = await fetch(new URL("/api/marks", baseUrl), {
+    method: "POST",
+    headers: postHeaders(),
+    body: JSON.stringify({ color: "#5b4636", note: "someone else's stroke" }),
+  });
+  const someoneElse = firstCookie(first)!.split("=")[1];
   const before = (await (await fetch(new URL("/api/marks", baseUrl))).json()).marks;
-  const someoneElse = before[0].hand;
+
   const res = await fetch(new URL("/api/marks", baseUrl), {
     method: "POST",
     headers: postHeaders(),
@@ -255,8 +287,11 @@ it("ignores a hand, id or timestamp a request body tries to set for itself", asy
   });
   expect(res.status).toBe(201);
   const created = (await res.json()).mark;
-  expect(created.hand).not.toBe(someoneElse);
-  expect(created.hand).toBe(firstCookie(res)!.split("=")[1]);
   expect(created.id).toBeGreaterThan(Math.max(...before.map((m: { id: number }) => m.id)));
   expect(created.createdAt).not.toBe("1269-01-01T00:00:00.000Z");
+
+  const asSomeoneElse = await (
+    await fetch(new URL("/api/marks", baseUrl), { headers: { cookie: `hand=${someoneElse}` } })
+  ).json();
+  expect(asSomeoneElse.marks.find((m: { id: number }) => m.id === created.id)?.yours).toBe(false);
 });

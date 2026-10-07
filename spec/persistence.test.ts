@@ -73,14 +73,10 @@ it("keeps a hand's past strokes after the server process restarts", async () => 
     const res = await fetch(new URL("/api/marks", origin), {
       headers: { cookie: cookie! },
     });
-    const { marks, you } = await res.json();
-    expect(you, `hand not recognised after restart; stderr: ${second.stderr()}`).toBe(
-      created.hand,
-    );
-    expect(
-      marks.some((m: { id: number; hand: string }) => m.id === created.id && m.hand === you),
-      "the pre-restart stroke is missing from the post-restart response",
-    ).toBe(true);
+    const { marks } = await res.json();
+    const kept = marks.find((m: { id: number }) => m.id === created.id);
+    expect(kept, "the pre-restart stroke is missing from the post-restart response").toBeTruthy();
+    expect(kept.yours, `hand not recognised after restart; stderr: ${second.stderr()}`).toBe(true);
   } finally {
     await stopServer(second.child);
   }

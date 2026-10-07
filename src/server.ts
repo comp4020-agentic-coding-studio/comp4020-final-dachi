@@ -2,7 +2,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { randomUUID } from "node:crypto";
-import { addMark, listMarks } from "./db.ts";
+import { addMark, listMarks, type Mark } from "./db.ts";
 import { validateMark } from "./marks.ts";
 import { renderReadme } from "./readme.ts";
 
@@ -43,6 +43,22 @@ function isSameOrigin(req: IncomingMessage): boolean {
   } catch {
     return false;
   }
+}
+
+// What a visitor is told about a stroke. A hand is a bearer token: whoever
+// holds it can post as that hand and see its strokes marked as theirs, so it
+// never leaves the server. Each response says only whether a stroke is the
+// requester's own.
+export interface PublicMark {
+  id: number;
+  note: string;
+  color: string;
+  createdAt: string;
+  yours: boolean;
+}
+
+function toPublic({ id, note, color, createdAt, hand }: Mark, you: string | null): PublicMark {
+  return { id, note, color, createdAt, yours: you !== null && hand === you };
 }
 
 function parseCookies(header: string | undefined): Record<string, string> {
@@ -144,7 +160,7 @@ const server = createServer(async (req, res) => {
       const cookies = parseCookies(req.headers.cookie);
       const you = isValidHand(cookies.hand) ? cookies.hand : null;
       res.writeHead(200, { "content-type": "application/json" });
-      res.end(JSON.stringify({ marks: listMarks(), you }));
+      res.end(JSON.stringify({ marks: listMarks().map((m) => toPublic(m, you)) }));
       return;
     }
     if (req.method === "POST" && url.pathname === "/api/marks") {
@@ -202,7 +218,7 @@ const server = createServer(async (req, res) => {
 
       const mark = addMark(hand, validated.note, validated.color);
       res.writeHead(201, { ...headers, "content-type": "application/json" });
-      res.end(JSON.stringify({ mark }));
+      res.end(JSON.stringify({ mark: toPublic(mark, hand) }));
       return;
     }
 
