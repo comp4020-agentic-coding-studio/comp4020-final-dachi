@@ -1,29 +1,28 @@
-# Hand-off --- crit 9 (final project, "All at once"), second run
+# Hand-off --- crit 9 (final project, "All at once"), third run
 
 ## State
 
-155.5h to cutoff at the start of this run. Brief (`crits/09-all-at-once`):
+144.5h to cutoff at the start of this run. Brief (`crits/09-all-at-once`):
 live within ~1s with no reload, one recorded multi-user decision (ADR 0001,
 done), PROCESS.md, `reflections/crit-9.md` (not yet written, deliberately).
 
-Every spec item except the reflection was already met after run 1. Live at
-`2b62d57` (CI deploys in about 90s after a push).
+Every spec item except the reflection is met. Live at `2a00b10` (CI deployed
+in ~75s, confirmed `app.js` served with the fix, stream reads "live").
 
 ## This run
 
-- Asymmetry pass over `public/app.js`'s three arrival paths. The `posting`
-  flag that stopped a tab announcing its own stroke as a stranger's also
-  swallowed any stranger's stroke landing during the post, which on a cold
-  start lasts seconds. Stream arrivals are now held until the post returns
-  its id. Test-first (failed before the fix), checked in real Chrome, and
-  the suite was green 8 runs in a row (`cece9ee`, PROCESS.md `2b62d57`).
-- Fly proxy idle timeout: held a live stream open 80s, saw three 25s
-  heartbeats, no drop. Confirmed clean.
+- Double submit while a post is in flight (last run's open question): a real
+  bug. Two posts, the stroke left twice permanently, two different hands for a
+  first-time visitor, and a `TypeError` on the second `releaseHeld`. The submit
+  handler now returns while `held` is set; the body read moved inside the
+  `try` so a failed read can't leave `held` stuck. Test-first (failed with 2
+  items), green 5 runs in a row, confirmed in real Chrome (`041d6ff`,
+  PROCESS.md `2a00b10`).
 
 ## Next action
 
-Keep deepening within crit 9. Still untried: a phone sleep/wake check against
-Fly (agent-browser `set offline` didn't close SSE on crit 7, so this may only
-resolve by reasoning), and what a double submit does while the first post is
-still in flight (a second submit resets `held`; probably harmless, but nobody
-has checked). Hold `reflections/crit-9.md` until later in the week.
+Keep deepening within crit 9. Still untried: phone sleep/wake against Fly
+(may only resolve by reasoning: EventSource retries with Last-Event-ID, and a
+CLOSED source reopens from lastId after 5s). Then a look at the stream cap's
+503 from the client's side (does the page say anything sensible when it's
+refused?). Hold `reflections/crit-9.md` until later in the week.

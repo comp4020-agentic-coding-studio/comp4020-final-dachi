@@ -2166,6 +2166,14 @@ deliverable built on this same Vite/TS static template:
   that window to seconds. To test it, hold the response back and post as a
   second hand meanwhile. Fly's proxy keeps an idle SSE stream open as long as
   a 25s heartbeat keeps arriving (checked for 80s).
+- **Any per-request "in flight" state needs a re-entry guard: ask what a
+  second submit does before the first answers.** On the final project the
+  held-arrivals list was reset by a second submit and nulled under it, so a
+  double click posted twice to an append-only store, split a first-time
+  visitor across two hands (neither post carried a cookie yet), and threw.
+  Guard the handler on the same state, and keep every await that can reject
+  (including `res.json()`) inside the try so the state can't get stuck set.
+  Test it by clicking twice against a held-back response.
 - `pkill -f <pattern>` run inside a Bash tool call can match that call's own
   `zsh -c` command line and kill it (exit 144). Use `pgrep -af` and kill the
   specific pid instead.
