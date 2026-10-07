@@ -38,6 +38,10 @@ const selectAllStmt = db.prepare(
   "SELECT id, hand, note, color, created_at AS createdAt FROM marks ORDER BY id ASC",
 );
 
+const selectAfterStmt = db.prepare(
+  "SELECT id, hand, note, color, created_at AS createdAt FROM marks WHERE id > ? ORDER BY id ASC",
+);
+
 export function addMark(hand: string, note: string, color: string): Mark {
   const createdAt = new Date().toISOString();
   const result = insertStmt.run(hand, note, color, createdAt);
@@ -46,4 +50,8 @@ export function addMark(hand: string, note: string, color: string): Mark {
 
 export function listMarks(): Mark[] {
   return selectAllStmt.all() as unknown as Mark[];
+}
+
+export function listMarksAfter(id: number): Mark[] {
+  return selectAfterStmt.all(id) as unknown as Mark[];
 }

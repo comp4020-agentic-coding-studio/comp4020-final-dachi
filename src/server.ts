@@ -2,7 +2,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from "node:ht
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { randomUUID } from "node:crypto";
-import { addMark, listMarks, type Mark } from "./db.ts";
+import { addMark, listMarks, listMarksAfter, type Mark } from "./db.ts";
 import { validateMark } from "./marks.ts";
 import { renderReadme } from "./readme.ts";
 
@@ -59,6 +59,45 @@ export interface PublicMark {
 
 function toPublic({ id, note, color, createdAt, hand }: Mark, you: string | null): PublicMark {
   return { id, note, color, createdAt, yours: you !== null && hand === you };
+}
+
+// Every open tab holds one of these. The app runs on exactly one machine
+// (fly.toml, --ha=false), so an in-process set is the whole broadcast bus;
+// a second machine would need a shared one.
+interface Subscriber {
+  res: ServerResponse;
+  you: string | null;
+}
+const subscribers = new Set<Subscriber>();
+
+// Each stream is a socket and a little memory held open for as long as the
+// tab is. A crit room is a few dozen tabs; this keeps a script opening
+// thousands from exhausting a 256MB machine.
+const MAX_SUBSCRIBERS = 500;
+
+// Fly's proxy closes a connection that's idle too long; a comment line well
+// inside that window keeps a quiet scroll's streams open.
+const HEARTBEAT_MS = 25_000;
+
+// The id doubles as the SSE event id, so a reconnecting EventSource's own
+// Last-Event-ID header says exactly which strokes it missed (see
+// docs/decisions/0001-reconnect-catches-up-by-stroke-id.md).
+function sendMark(res: ServerResponse, mark: Mark, you: string | null) {
+  res.write(`id: ${mark.id}\nevent: mark\ndata: ${JSON.stringify(toPublic(mark, you))}\n\n`);
+}
+
+function broadcast(mark: Mark) {
+  for (const { res, you } of subscribers) sendMark(res, mark, you);
+}
+
+// Where a stream should resume from: the later of the browser's own
+// Last-Event-ID (set on its automatic reconnects) and ?after= (what the page
+// had already loaded when it first opened the stream). Anything that isn't a
+// plain non-negative integer counts as "from the start".
+function resumeAfter(req: IncomingMessage, url: URL): number {
+  const parse = (value: unknown) =>
+    typeof value === "string" && /^\d{1,15}$/.test(value) ? Number(value) : 0;
+  return Math.max(parse(req.headers["last-event-id"]), parse(url.searchParams.get("after")));
 }
 
 function parseCookies(header: string | undefined): Record<string, string> {
@@ -163,6 +202,35 @@ const server = createServer(async (req, res) => {
       res.end(JSON.stringify({ marks: listMarks().map((m) => toPublic(m, you)) }));
       return;
     }
+    if (req.method === "GET" && url.pathname === "/api/marks/stream") {
+      if (subscribers.size >= MAX_SUBSCRIBERS) {
+        res.writeHead(503, { "content-type": "text/plain", "retry-after": "10" });
+        res.end("too many open streams");
+        return;
+      }
+      const cookies = parseCookies(req.headers.cookie);
+      const you = isValidHand(cookies.hand) ? cookies.hand : null;
+      res.writeHead(200, {
+        "content-type": "text/event-stream",
+        "cache-control": "no-cache",
+        "x-accel-buffering": "no",
+      });
+      // Node holds headers back until the first body write, so on a quiet
+      // scroll the browser wouldn't see the stream open (or show it as live)
+      // until the first heartbeat. The retry hint is that first write.
+      res.write("retry: 3000\n\n");
+      // Catch-up and subscribe in one synchronous step: node:sqlite doesn't
+      // yield, so no stroke can land between the replay and joining the set.
+      for (const mark of listMarksAfter(resumeAfter(req, url))) sendMark(res, mark, you);
+      const subscriber = { res, you };
+      subscribers.add(subscriber);
+      const heartbeat = setInterval(() => res.write(": ping\n\n"), HEARTBEAT_MS);
+      res.on("close", () => {
+        clearInterval(heartbeat);
+        subscribers.delete(subscriber);
+      });
+      return;
+    }
     if (req.method === "POST" && url.pathname === "/api/marks") {
       if (!isSameOrigin(req)) {
         res.writeHead(403, { "content-type": "application/json" });
@@ -217,6 +285,7 @@ const server = createServer(async (req, res) => {
       }
 
       const mark = addMark(hand, validated.note, validated.color);
+      broadcast(mark);
       res.writeHead(201, { ...headers, "content-type": "application/json" });
       res.end(JSON.stringify({ mark: toPublic(mark, hand) }));
       return;
