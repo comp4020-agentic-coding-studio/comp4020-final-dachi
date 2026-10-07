@@ -19,6 +19,16 @@ const form = document.getElementById("add-mark-form");
 const paletteEl = form.querySelector(".palette");
 const noteInput = document.getElementById("note");
 const statusEl = document.getElementById("form-status");
+const liveState = document.getElementById("live-state");
+const announce = document.getElementById("scroll-announce");
+
+// The highest stroke id on the page. Strokes only ever get appended with a
+// higher id, so this is all a reconnecting stream needs to say what it missed.
+let lastId = 0;
+const rendered = new Map();
+// While this tab's own post is in flight, its stroke can arrive on the stream
+// first as someone else's; don't announce it to this tab as a stranger's.
+let posting = false;
 
 function buildPalette() {
   PALETTE.forEach(({ color, name }, i) => {
@@ -56,6 +66,7 @@ function timeLabel(iso) {
 function markToListItem(mark) {
   const li = document.createElement("li");
   li.className = "mark" + (mark.yours ? " mark--yours" : "");
+  li.dataset.id = String(mark.id);
 
   const stroke = document.createElement("span");
   stroke.className = "mark__stroke";
@@ -72,17 +83,8 @@ function markToListItem(mark) {
   return li;
 }
 
-function render(marks) {
-  scrollList.innerHTML = "";
-  if (marks.length === 0) {
-    scrollList.append(emptyNotice);
-    return;
-  }
-  for (const mark of marks) {
-    scrollList.append(markToListItem(mark));
-  }
-
-  const ownCount = marks.filter((m) => m.yours).length;
+function updateWelcome() {
+  const ownCount = scrollList.querySelectorAll(".mark--yours").length;
   if (ownCount > 0) {
     welcomeBack.hidden = false;
     welcomeBack.textContent =
@@ -90,6 +92,45 @@ function render(marks) {
         ? "You've left a mark on this scroll before — it's still there."
         : `You've left ${ownCount} marks on this scroll before — they're still there.`;
   }
+}
+
+// Strokes can reach the page three ways (the initial load, the stream, and
+// the response to your own post) in any order, so each lands by id: once,
+// and in the scroll's own order. A first-time visitor's stream opened before
+// their hand existed, so it can deliver their own first stroke as someone
+// else's; the post's own response, which knows better, replaces it.
+function insertMark(mark) {
+  const existing = rendered.get(mark.id);
+  if (existing) {
+    if (mark.yours && !existing.classList.contains("mark--yours")) {
+      const li = markToListItem(mark);
+      existing.replaceWith(li);
+      rendered.set(mark.id, li);
+    }
+    return false;
+  }
+  emptyNotice.remove();
+  const li = markToListItem(mark);
+  // almost always the newest, so only an out-of-order arrival scans
+  const later =
+    mark.id > lastId
+      ? null
+      : [...scrollList.children].find((el) => Number(el.dataset.id) > mark.id);
+  scrollList.insertBefore(li, later ?? null);
+  rendered.set(mark.id, li);
+  lastId = Math.max(lastId, mark.id);
+  return true;
+}
+
+function render(marks) {
+  scrollList.innerHTML = "";
+  rendered.clear();
+  if (marks.length === 0) {
+    scrollList.append(emptyNotice);
+    return;
+  }
+  for (const mark of marks) insertMark(mark);
+  updateWelcome();
 }
 
 async function load() {
@@ -100,13 +141,37 @@ async function load() {
     const res = await fetch("/api/marks");
     const data = await res.json();
     render(data.marks);
+    return true;
   } catch {
     scrollList.innerHTML = "";
     const notice = document.createElement("li");
     notice.className = "scroll__empty";
     notice.textContent = "couldn't load the scroll — check your connection and try reloading.";
     scrollList.append(notice);
+    return false;
   }
+}
+
+// EventSource retries a dropped connection by itself, sending Last-Event-ID
+// so the server replays exactly what was missed. It gives up for good only
+// when an attempt gets a non-200 answer (a redeploy, a cold start the proxy
+// couldn't wait for), so that case reopens by hand from lastId.
+function connect() {
+  const source = new EventSource(`/api/marks/stream?after=${lastId}`);
+  source.addEventListener("open", () => {
+    liveState.textContent = "live — strokes from other hands appear as they're added.";
+  });
+  source.addEventListener("mark", (event) => {
+    const mark = JSON.parse(event.data);
+    if (insertMark(mark) && !mark.yours && !posting) {
+      announce.textContent = `a new stroke: ${mark.note || "no note"}`;
+    }
+    updateWelcome();
+  });
+  source.addEventListener("error", () => {
+    liveState.textContent = "reconnecting — anything added meanwhile will arrive when it's back.";
+    if (source.readyState === EventSource.CLOSED) setTimeout(connect, 5000);
+  });
 }
 
 form.addEventListener("submit", async (event) => {
@@ -116,6 +181,7 @@ form.addEventListener("submit", async (event) => {
 
   statusEl.textContent = "adding your mark…";
   let res;
+  posting = true;
   try {
     res = await fetch("/api/marks", {
       method: "POST",
@@ -123,19 +189,32 @@ form.addEventListener("submit", async (event) => {
       body: JSON.stringify({ color, note }),
     });
   } catch {
+    posting = false;
     statusEl.textContent = "that mark couldn't be added — check your connection and try again.";
     return;
   }
 
   if (!res.ok) {
+    posting = false;
     statusEl.textContent = "that mark couldn't be added — try a shorter note.";
     return;
   }
 
   noteInput.value = "";
   statusEl.textContent = "added to the scroll.";
-  await load();
+  insertMark((await res.json()).mark);
+  posting = false;
+  updateWelcome();
 });
 
 buildPalette();
-load();
+// The stream opens only after the load, from the last id it rendered, so the
+// two never disagree about where the scroll was when this tab arrived.
+load().then((loaded) => {
+  if (!loaded) {
+    liveState.textContent = "not live — reload to try again.";
+    return;
+  }
+  if ("EventSource" in window) connect();
+  else liveState.textContent = "this browser can't receive live strokes — reload to see new ones.";
+});
