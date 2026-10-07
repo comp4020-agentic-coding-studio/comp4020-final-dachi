@@ -251,6 +251,19 @@ in `insertMark`, which scanned the whole list for every stroke and timed out
 in jsdom once the test database passed 600 strokes. Fifteen consecutive green
 runs followed the fix.
 
+A later pass read the page's three arrival paths (load, stream, own post)
+side by side, asking whether the guard against announcing your own stroke as
+a stranger's could catch anything else. It could. The guard was a plain
+`posting` flag, so a stranger's stroke landing while your post was in flight
+went unannounced to a screen reader, and a cold start makes that window
+seconds long rather than milliseconds. Stream arrivals now wait until the
+post answers with its id, and only strangers' strokes are announced. A test
+that holds the post back while a second hand posts failed before the fix
+([`cece9ee`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/commit/cece9ee)).
+The same pass held a stream open on the live Fly URL for 80 seconds. The proxy
+kept it open across three 25-second heartbeats, so its idle timeout isn't
+quietly cutting streams on a quiet scroll.
+
 ## What's next
 
 Crit 10 adds server-side logging. The stream is the first part of the app
