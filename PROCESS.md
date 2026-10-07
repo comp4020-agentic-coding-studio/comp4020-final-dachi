@@ -264,6 +264,15 @@ The same pass held a stream open on the live Fly URL for 80 seconds. The proxy
 kept it open across three 25-second heartbeats, so its idle timeout isn't
 quietly cutting streams on a quiet scroll.
 
+The next pass asked what that held list does if a second post starts while
+the first is still in flight. A double click answered it: two posts, the same
+stroke left twice on a scroll with no delete path (under two different hands,
+for a first-time visitor whose cookie didn't exist yet for either post), and
+an unhandled `TypeError` when the second answer released a list the first had
+already cleared. The page now ignores a submit while a post is in flight. The
+test clicks twice against a held-back response and failed before the fix
+([`041d6ff`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/commit/041d6ff)).
+
 ## What's next
 
 Crit 10 adds server-side logging. The stream is the first part of the app
