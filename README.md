@@ -34,11 +34,10 @@ years rather than resetting each session.
 **What I chose not to build, this week:** accounts (a browser is a person,
 distinguished by an anonymous cookie, nothing more); editing or deleting a
 stroke once added (the scroll is append-only, on purpose &mdash; that's a
-claim, not an oversight); live updates (the brief stages real-time for the
-next crit, so for now the shared state is real &mdash; every stroke is a row
-every visitor's next load can see &mdash; but you see it on reload, not
-pushed to an open tab); any limit on how many strokes one hand can add
-(a guestbook you can only sign once is a worse guestbook).
+claim, not an oversight); any limit on how many strokes one hand can add
+(a guestbook you can only sign once is a worse guestbook); any sign of who
+else is watching (a scroll records hands that have written, not hands that
+are looking).
 
 ## What's enforced and what's judged
 
@@ -48,7 +47,10 @@ server-side (not just by the input's `maxlength`), a returning hand's
 past strokes are still in the response after a fresh server restart, no
 method, from any hand, edits or deletes a stroke once it's stored, the page
 tells you in text (not just ink) which strokes are yours, and every control
-on it is a native, labelled form element in the tab order.
+on it is a native, labelled form element in the tab order. Also enforced:
+a stroke reaches every other open tab within a second, with no reload; a
+tab that reconnects is sent exactly the strokes it missed, in order; and no
+response or stream ever carries another visitor's `hand`.
 
 Judged, by a visitor reading this page: whether the scroll reads as one
 continuous, shared object rather than a list of comments; whether finding
@@ -56,10 +58,24 @@ your own old stroke feels like the point, not an afterthought; and whether
 six ink colours and a 140-character note are enough constraint to keep this
 feeling like a scroll and not a chat log.
 
-## Multi-user, for now
+## Several hands at once
 
 A person is whoever's browser holds a given anonymous `hand` cookie &mdash;
 no account, no name required. Everyone sees the same scroll; there is no
-private view. What "real-time" and "several hands at once" mean here is
-still being decided, and the next crit is where that gets written down and
-defended.
+private view. The cookie is the only proof of whose a stroke is, so the
+server never sends it back out: each response just says whether a stroke is
+yours.
+
+The scroll is live. When anyone adds a stroke, it appears in every open tab
+within about a second, and a line above the scroll says in words whether
+your tab is live or reconnecting. Nothing is ever edited, so two hands
+writing at once never conflict; they simply land one after the other, in the
+order the server received them.
+
+The decision I'd defend at a crit is what happens when a tab drops off and
+comes back. A phone that slept, a train tunnel, or a redeploy under an open
+tab all get exactly the strokes added in the meantime, in order, without
+redrawing the scroll you were reading. A scroll that silently lost what was
+added while you looked away would fail the "coming back is worth it" half of
+this README's argument. The alternatives and their costs are in
+[`docs/decisions/0001-reconnect-catches-up-by-stroke-id.md`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/blob/main/docs/decisions/0001-reconnect-catches-up-by-stroke-id.md).
