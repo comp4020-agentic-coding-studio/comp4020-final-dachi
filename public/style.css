@@ -102,8 +102,12 @@ button:focus-visible,
   padding: 0.15rem;
 }
 
+/* A note can be one unbroken run (a pasted URL); let it break anywhere
+   rather than push the page sideways on a narrow screen. */
 .mark__text {
   font-size: 0.9rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 form fieldset {
