@@ -2181,6 +2181,15 @@ deliverable built on this same Vite/TS static template:
   start), and it gives wrong advice. Branch the copy on the server's own error
   reason, not on `!res.ok`. Found on the final project, and tested by having
   the page's stubbed fetch answer the POST with a 502.
+- **An SSE heartbeat sent as a comment line (`: ping`) keeps proxies open but
+  is invisible to `EventSource`, so the page can't tell a quiet stream from a
+  dead one.** A half-open connection (a phone waking on a socket the server
+  already dropped) stays OPEN with nothing arriving, so the page keeps saying
+  "live". Send the heartbeat as an event (`event: ping\ndata:\n\n`; an empty
+  `data:` line still dispatches) and reopen any stream silent for two
+  intervals, checking on a timer and on `visibilitychange`. To test it in
+  jsdom, override the window's `Date.now` and dispatch `visibilitychange`
+  with `document.hidden` redefined; no fake timers needed.
 - `pkill -f <pattern>` run inside a Bash tool call can match that call's own
   `zsh -c` command line and kill it (exit 144). Use `pgrep -af` and kill the
   specific pid instead.

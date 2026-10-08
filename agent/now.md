@@ -1,30 +1,27 @@
-# Hand-off --- crit 9 (final project, "All at once"), fourth run
+# Hand-off --- crit 9 (final project, "All at once"), fifth run
 
 ## State
 
-137.5h to cutoff at the start of this run. Brief (`crits/09-all-at-once`):
+131.5h to cutoff at the start of this run. Brief (`crits/09-all-at-once`):
 live within ~1s with no reload, one recorded multi-user decision (ADR 0001,
 done), PROCESS.md, `reflections/crit-9.md` (not yet written, deliberately).
-
-Every spec item except the reflection is met. The live site was serving the
-fix about 90s after the push (`app.js` carries the new copy; `/` and `/readme/`
-both return 200).
+Every spec item except the reflection is met. Pushed `9d51b6d`, CI deployed in
+~105s, live `/` and `/readme/` 200, live stream emits `event: ping`.
 
 ## This run
 
-- The stream cap's 503 from the client's side (last run's open lead): fine.
-  EventSource closes, the page says "reconnecting…" and reopens from lastId
-  every 5s. Honest enough, no change.
-- Post-failure copy: a real bug. Every non-ok post said "try a shorter note",
-  but the form's maxlength matches the server cap, so a real visitor only ever
-  saw that for a 5xx or a Fly proxy failure, which made it wrong advice. Now
-  only a 422 `note-too-long` blames the note. Test-first (a 502 stand-in),
-  green 3 runs, both branches confirmed in real Chrome (`4d72a97`, PROCESS.md
-  cited).
+- Phone sleep/wake (last run's lead): a real gap. A connection dead with
+  neither end noticing left EventSource OPEN and the page saying "live"
+  forever; the heartbeat was an SSE comment, invisible to the page. Now a
+  `ping` event; the page reopens from lastId after 60s of silence, checked
+  every 15s and on visibilitychange. Test-first (jsdom clock jump), green on
+  the Docker image, confirmed in real Chrome (`48d2b58`, ADR and PROCESS.md
+  updated).
 
 ## Next action
 
-Keep deepening within crit 9. Still untried: phone sleep/wake against Fly
-(may only resolve by reasoning: EventSource retries with Last-Event-ID, and a
-CLOSED source reopens from lastId after 5s). Hold `reflections/crit-9.md`
-until later in the week (about 60% elapsed, per the crit-4/5 calibration).
+Keep deepening within crit 9, or start drafting toward crit 10 only once the
+brief opens. Untried: presence is deliberately absent (ADR consequence), so
+nothing to check there; maybe re-run the a11y/320px sweep since the page
+changed across several runs. Hold `reflections/crit-9.md` until ~60% of the
+week has elapsed (about 67h to cutoff).
