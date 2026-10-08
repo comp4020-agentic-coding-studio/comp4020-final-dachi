@@ -293,6 +293,15 @@ the fix; in real Chrome the `ping` event dispatched and the forced silence
 reopened the stream from the right id
 ([`48d2b58`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/commit/48d2b58)).
 
+The page had changed across five runs since its last accessibility sweep, so
+the next run repeated it rather than adding to it. axe-core was still clean on
+both pages, but a 320px viewport (WCAG's reflow width) after posting a note
+that was one unbroken run of characters stretched the page to 913px. The form
+allows 140 characters, so a pasted URL would do it. jsdom can't see layout, so
+the evidence is the real-browser `scrollWidth`, back to the viewport width
+once the note was allowed to break anywhere
+([`0c67e35`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/commit/0c67e35)).
+
 ## What's next
 
 Crit 10 adds server-side logging. The stream is the first part of the app
