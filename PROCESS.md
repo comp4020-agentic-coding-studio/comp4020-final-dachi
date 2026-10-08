@@ -273,6 +273,14 @@ already cleared. The page now ignores a submit while a post is in flight. The
 test clicks twice against a held-back response and failed before the fix
 ([`041d6ff`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/commit/041d6ff)).
 
+The same pass's failure branch said "try a shorter note" for every refused
+post. The form's `maxlength` matches the server's cap, so a real visitor
+could only ever see that line when the server or Fly's proxy failed, and then
+it gave the wrong advice. Only the server's own `note-too-long` verdict now
+blames the note; anything else says to try again. A test that answers the
+post with a 502 failed before the fix
+([`4d72a97`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/commit/4d72a97)).
+
 ## What's next
 
 Crit 10 adds server-side logging. The stream is the first part of the app
