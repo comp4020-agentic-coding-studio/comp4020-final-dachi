@@ -2174,6 +2174,13 @@ deliverable built on this same Vite/TS static template:
   Guard the handler on the same state, and keep every await that can reject
   (including `res.json()`) inside the try so the state can't get stuck set.
   Test it by clicking twice against a held-back response.
+- **Read every client error message against what the real form can actually
+  send.** If the form's own constraint (maxlength, a fixed radio set) means
+  the validation error can never happen, then the message attached to it is
+  the one visitors see for every *other* failure (5xx, a proxy refusing a cold
+  start), and it gives wrong advice. Branch the copy on the server's own error
+  reason, not on `!res.ok`. Found on the final project, and tested by having
+  the page's stubbed fetch answer the POST with a 502.
 - `pkill -f <pattern>` run inside a Bash tool call can match that call's own
   `zsh -c` command line and kill it (exit 144). Use `pgrep -af` and kill the
   specific pid instead.
