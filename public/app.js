@@ -197,6 +197,7 @@ form.addEventListener("submit", async (event) => {
   statusEl.textContent = "adding your mark…";
   let res;
   let mark;
+  let error;
   held = [];
   try {
     res = await fetch("/api/marks", {
@@ -205,15 +206,21 @@ form.addEventListener("submit", async (event) => {
       body: JSON.stringify({ color, note }),
     });
     if (res.ok) ({ mark } = await res.json());
+    else if (res.status === 422) ({ error } = await res.json());
   } catch {
     releaseHeld(null);
     statusEl.textContent = "that mark couldn't be added — check your connection and try again.";
     return;
   }
 
+  // Only the server's own verdict on the note blames it: the form's maxlength
+  // matches the cap, so anything else is the server or Fly's proxy failing.
   if (!res.ok) {
     releaseHeld(null);
-    statusEl.textContent = "that mark couldn't be added — try a shorter note.";
+    statusEl.textContent =
+      error === "note-too-long"
+        ? "that mark couldn't be added — try a shorter note."
+        : "the scroll couldn't take that mark just now — try again in a moment.";
     return;
   }
 

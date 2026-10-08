@@ -33,11 +33,13 @@ afterEach(() => {
   for (const s of streams.splice(0)) s.close();
 });
 
-async function openPage(cookie = "", { holdPostMs = 0 } = {}): Promise<Document> {
+async function openPage(cookie = "", { holdPostMs = 0, postStatus = 0 } = {}): Promise<Document> {
   const html = await (await fetch(new URL("/", baseUrl))).text();
   const script = await (await fetch(new URL("/app.js", baseUrl))).text();
   const { window } = new JSDOM(html, { url: baseUrl, runScripts: "outside-only" });
   window.fetch = (async (input: string, init: RequestInit = {}) => {
+    // stands in for Fly's proxy answering when it couldn't reach the machine
+    if (init.method === "POST" && postStatus) return new Response("", { status: postStatus });
     const res = await fetch(new URL(input, baseUrl), {
       ...init,
       headers: { ...(init.headers as Record<string, string>), cookie, origin: baseUrl },
@@ -208,4 +210,20 @@ it("posts once when the form is submitted again before the first post answers", 
   await new Promise((resolve) => setTimeout(resolve, 600));
   const items = [...doc.querySelectorAll("#scroll li")].filter((li) => li.textContent?.includes(mine));
   expect(items).toHaveLength(1);
+});
+
+// The real form can't send an over-long note (maxlength matches the server's
+// cap), so a refused post is almost always the server or Fly's proxy failing,
+// and advice to shorten the note would be wrong.
+it("doesn't blame the note when the server, not the note, refused the post", async () => {
+  const doc = await openPage("", { postStatus: 502 });
+  await until(() => doc.getElementById("live-state")!.textContent!.startsWith("live"), "the stream to open");
+
+  (doc.getElementById("note") as HTMLInputElement).value = "a perfectly short note";
+  doc.querySelector<HTMLButtonElement>("#add-mark-form button")!.click();
+  const status = doc.getElementById("form-status")!;
+  await until(() => status.textContent !== "adding your mark…", "the post to finish");
+  expect(status.textContent).not.toMatch(/shorter/);
+  expect(status.textContent).toMatch(/try again/);
+  expect((doc.getElementById("note") as HTMLInputElement).value).toBe("a perfectly short note");
 });
