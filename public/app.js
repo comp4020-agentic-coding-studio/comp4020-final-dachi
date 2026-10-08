@@ -167,12 +167,28 @@ async function load() {
 // so the server replays exactly what was missed. It gives up for good only
 // when an attempt gets a non-200 answer (a redeploy, a cold start the proxy
 // couldn't wait for), so that case reopens by hand from lastId.
+//
+// A connection can also die without either end saying so: a phone that slept
+// through the server dropping it, a network switch with no reset. EventSource
+// still reads OPEN and would say "live" while hearing nothing, so the page
+// reopens any stream that has missed two of the server's pings.
+const SILENCE_MS = 60_000;
+let source = null;
+let heardAt = 0;
+
 function connect() {
-  const source = new EventSource(`/api/marks/stream?after=${lastId}`);
-  source.addEventListener("open", () => {
+  const own = new EventSource(`/api/marks/stream?after=${lastId}`);
+  source = own;
+  heardAt = Date.now();
+  own.addEventListener("open", () => {
+    heardAt = Date.now();
     liveState.textContent = "live — strokes from other hands appear as they're added.";
   });
-  source.addEventListener("mark", (event) => {
+  own.addEventListener("ping", () => {
+    heardAt = Date.now();
+  });
+  own.addEventListener("mark", (event) => {
+    heardAt = Date.now();
     const mark = JSON.parse(event.data);
     if (insertMark(mark) && !mark.yours) {
       if (held) held.push(mark);
@@ -180,10 +196,16 @@ function connect() {
     }
     updateWelcome();
   });
-  source.addEventListener("error", () => {
+  own.addEventListener("error", () => {
     liveState.textContent = "reconnecting — anything added meanwhile will arrive when it's back.";
-    if (source.readyState === EventSource.CLOSED) setTimeout(connect, 5000);
+    if (own.readyState === EventSource.CLOSED) setTimeout(connect, 5000);
   });
+}
+
+function reopenIfSilent() {
+  if (source?.readyState !== EventSource.OPEN || Date.now() - heardAt <= SILENCE_MS) return;
+  source.close();
+  connect();
 }
 
 form.addEventListener("submit", async (event) => {
@@ -239,6 +261,12 @@ load().then((loaded) => {
     liveState.textContent = "not live — reload to try again.";
     return;
   }
-  if ("EventSource" in window) connect();
-  else liveState.textContent = "this browser can't receive live strokes — reload to see new ones.";
+  if ("EventSource" in window) {
+    connect();
+    // a sleeping phone's timers barely run, so check again the moment it wakes
+    setInterval(reopenIfSilent, 15_000);
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) reopenIfSilent();
+    });
+  } else liveState.textContent = "this browser can't receive live strokes — reload to see new ones.";
 });

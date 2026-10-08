@@ -33,6 +33,8 @@ afterEach(() => {
   for (const s of streams.splice(0)) s.close();
 });
 
+const opened: { url: string; closed: boolean }[] = [];
+
 async function openPage(cookie = "", { holdPostMs = 0, postStatus = 0 } = {}): Promise<Document> {
   const html = await (await fetch(new URL("/", baseUrl))).text();
   const script = await (await fetch(new URL("/app.js", baseUrl))).text();
@@ -50,21 +52,33 @@ async function openPage(cookie = "", { holdPostMs = 0, postStatus = 0 } = {}): P
   }) as typeof window.fetch;
 
   class StreamStandIn extends window.EventTarget {
+    static OPEN = 1;
     static CLOSED = 2;
     readyState = 0;
+    record = { url: "", closed: false };
+    stream: SseStream | undefined;
     constructor(url: string) {
       super();
+      this.record.url = url;
+      opened.push(this.record);
       void (async () => {
         const stream = await openStream(new URL(url, baseUrl), { cookie });
         streams.push(stream);
+        this.stream = stream;
+        if (this.record.closed) return stream.close();
         this.readyState = 1;
         this.dispatchEvent(new window.Event("open"));
         for (;;) {
           const event = await stream.next(60_000).catch(() => null);
-          if (!event) return;
+          if (!event || this.record.closed) return;
           this.dispatchEvent(new window.MessageEvent(event.event, { data: event.data }));
         }
       })();
+    }
+    close() {
+      this.record.closed = true;
+      this.readyState = 2;
+      this.stream?.close();
     }
   }
   (window as unknown as { EventSource: unknown }).EventSource = StreamStandIn;
@@ -226,4 +240,26 @@ it("doesn't blame the note when the server, not the note, refused the post", asy
   expect(status.textContent).not.toMatch(/shorter/);
   expect(status.textContent).toMatch(/try again/);
   expect((doc.getElementById("note") as HTMLInputElement).value).toBe("a perfectly short note");
+});
+
+// A stream can die without either end saying so (a phone waking on a
+// connection the server already dropped). EventSource still reads OPEN, so the
+// page has to notice the silence itself and reopen from where it was.
+it("reopens a stream that has gone silent, from the last stroke it showed", async () => {
+  const doc = await openPage(await addStroke(`page test, sleeper ${randomUUID()}`));
+  const liveState = doc.getElementById("live-state")!;
+  await until(() => liveState.textContent!.startsWith("live"), "the stream to open");
+  const first = opened.at(-1)!;
+  const shown = Math.max(...[...doc.querySelectorAll<HTMLElement>("#scroll li")].map((li) => Number(li.dataset.id)));
+
+  const window = doc.defaultView!;
+  const now = window.Date.now.bind(window.Date);
+  window.Date.now = () => now() + 120_000;
+  Object.defineProperty(doc, "hidden", { value: false, configurable: true });
+  doc.dispatchEvent(new window.Event("visibilitychange"));
+
+  expect(first.closed).toBe(true);
+  expect(opened.at(-1)).not.toBe(first);
+  expect(opened.at(-1)!.url).toContain(`after=${shown}`);
+  await until(() => liveState.textContent!.startsWith("live"), "the stream to reopen");
 });

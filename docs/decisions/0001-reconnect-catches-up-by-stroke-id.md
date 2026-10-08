@@ -39,7 +39,12 @@ reconnect, and `?after=`, which the page sets to the highest id it loaded when
 it first opens the stream. One code path therefore covers a first open, a
 dropped connection, and a server restart. When the browser gives up for good,
 which an `EventSource` does on any non-200 answer (a redeploy mid-flight, say),
-the page reopens it after five seconds from the last id it rendered.
+the page reopens it after five seconds from the last id it rendered. A
+connection can also die with neither end noticing (a phone waking on a
+connection the server already dropped), and then `EventSource` stays open,
+hearing nothing. The server pings every 25 seconds, so the page reopens any
+stream that has heard nothing for a minute, checking again the moment a
+hidden tab becomes visible.
 
 The page inserts each stroke by id: once, in id order, whichever way it
 arrived (initial load, stream, or the response to your own post). A line above

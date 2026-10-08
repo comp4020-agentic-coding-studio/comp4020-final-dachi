@@ -75,8 +75,9 @@ const subscribers = new Set<Subscriber>();
 // thousands from exhausting a 256MB machine.
 const MAX_SUBSCRIBERS = 500;
 
-// Fly's proxy closes a connection that's idle too long; a comment line well
-// inside that window keeps a quiet scroll's streams open.
+// Fly's proxy closes a connection that's idle too long; a ping well inside
+// that window keeps a quiet scroll's streams open. It's an event, not a
+// comment line, because the page treats a stream that misses two as dead.
 const HEARTBEAT_MS = 25_000;
 
 // The id doubles as the SSE event id, so a reconnecting EventSource's own
@@ -224,7 +225,7 @@ const server = createServer(async (req, res) => {
       for (const mark of listMarksAfter(resumeAfter(req, url))) sendMark(res, mark, you);
       const subscriber = { res, you };
       subscribers.add(subscriber);
-      const heartbeat = setInterval(() => res.write(": ping\n\n"), HEARTBEAT_MS);
+      const heartbeat = setInterval(() => res.write("event: ping\ndata:\n\n"), HEARTBEAT_MS);
       res.on("close", () => {
         clearInterval(heartbeat);
         subscribers.delete(subscriber);
