@@ -281,6 +281,18 @@ blames the note; anything else says to try again. A test that answers the
 post with a 502 failed before the fix
 ([`4d72a97`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/commit/4d72a97)).
 
+The reconnect decision assumed a dead connection would always tell the
+browser it was dead. It needn't. A phone that wakes on a socket the server
+dropped while it slept can leave `EventSource` open, and the page saying
+"live", with nothing ever arriving. The 25-second heartbeat was a comment
+line, which `EventSource` swallows, so the page had no way to hear it. It is
+now a `ping` event, and the page reopens from its last id any stream that has
+heard nothing for a minute, checking on a timer and again the moment the tab
+becomes visible. A jsdom test jumps the page's clock forward and fails without
+the fix; in real Chrome the `ping` event dispatched and the forced silence
+reopened the stream from the right id
+([`48d2b58`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/commit/48d2b58)).
+
 ## What's next
 
 Crit 10 adds server-side logging. The stream is the first part of the app
