@@ -2190,6 +2190,13 @@ deliverable built on this same Vite/TS static template:
   intervals, checking on a timer and on `visibilitychange`. To test it in
   jsdom, override the window's `Date.now` and dispatch `visibilitychange`
   with `document.hidden` redefined; no fake timers needed.
+- **Drive the 320px reflow check with worst-case user content, not just the
+  page as it loads.** On the final project a note that was one unbroken run
+  (a pasted URL, within the form's own 140-char limit) widened the page to
+  913px, because a flex item's default `min-width: auto` stops it shrinking
+  below its longest word. axe saw nothing. Post the longest unbroken value
+  the form allows, then read `scrollWidth`; fix with `min-width: 0;
+  overflow-wrap: anywhere` on the text.
 - `pkill -f <pattern>` run inside a Bash tool call can match that call's own
   `zsh -c` command line and kill it (exit 144). Use `pgrep -af` and kill the
   specific pid instead.
