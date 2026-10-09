@@ -313,6 +313,16 @@ deliberate next stroke is quick enough to hit. A test that clicks again the
 moment the post answers failed before the fix
 ([`91eba67`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/commit/91eba67)).
 
+The crit itself is a pod posting at the same moment, so the next run staged
+that: two real Chrome sessions, both first-time visitors, submitting at the
+same instant. Both tabs agreed on the order and each marked only its own
+stroke as theirs. The rehearsal did turn up a smaller flaw. The page re-ran
+the welcome line after every post and stream arrival, so a stranger's first
+stroke drew "You've left a mark on this scroll before". The line now counts
+only the strokes the page loaded with. The test posts as a new hand and then
+adds a stroke from a returning hand's other tab, and it failed before the fix
+([`008b2d8`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/commit/008b2d8)).
+
 ## What's next
 
 Crit 10 adds server-side logging. The stream is the first part of the app
