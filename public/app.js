@@ -89,6 +89,8 @@ function markToListItem(mark) {
   return li;
 }
 
+// Only the load calls this: a stroke made or arriving during this visit isn't
+// one the hand left "before".
 function updateWelcome() {
   const ownCount = scrollList.querySelectorAll(".mark--yours").length;
   if (ownCount > 0) {
@@ -199,7 +201,6 @@ function connect() {
       if (held) held.push(mark);
       else announceStrokes([mark]);
     }
-    updateWelcome();
   });
   own.addEventListener("error", () => {
     liveState.textContent = "reconnecting — anything added meanwhile will arrive when it's back.";
@@ -256,7 +257,6 @@ form.addEventListener("submit", async (event) => {
   statusEl.textContent = "added to the scroll.";
   insertMark(mark);
   releaseHeld(mark.id);
-  updateWelcome();
 });
 
 buildPalette();

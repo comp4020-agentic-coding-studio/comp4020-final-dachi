@@ -177,6 +177,30 @@ it("marks a first-time visitor's own first stroke as theirs, even when the strea
   expect(announce.textContent).toBe(before);
 });
 
+// "Before" means before this visit: a stroke made on this page, or arriving
+// from another of this hand's tabs, isn't news to welcome anyone back with.
+it("welcomes a hand back only for strokes left before this visit", async () => {
+  const first = await openPage();
+  await until(() => first.getElementById("live-state")!.textContent!.startsWith("live"), "the stream to open");
+  (first.getElementById("note") as HTMLInputElement).value = `page test, welcome ${randomUUID()}`;
+  first.querySelector<HTMLButtonElement>("#add-mark-form button")!.click();
+  await until(
+    () => first.getElementById("form-status")!.textContent === "added to the scroll.",
+    "the post to finish",
+  );
+  expect(first.getElementById("welcome-back")!.hidden).toBe(true);
+
+  const cookie = await addStroke(`page test, welcome old ${randomUUID()}`);
+  const returning = await openPage(cookie);
+  await until(() => returning.getElementById("live-state")!.textContent!.startsWith("live"), "the stream to open");
+  const welcome = returning.getElementById("welcome-back")!;
+  expect(welcome.textContent).toMatch(/left a mark/);
+  const fromOtherTab = `page test, welcome other tab ${randomUUID()}`;
+  await addStroke(fromOtherTab, cookie);
+  await itemFor(returning, fromOtherTab);
+  expect(welcome.textContent).toMatch(/left a mark/);
+});
+
 // Holding this tab's own announcement back while its post is in flight mustn't
 // swallow a stranger's stroke that happens to land in the same window.
 it("still announces another hand's stroke that arrives while your own post is in flight", async () => {
