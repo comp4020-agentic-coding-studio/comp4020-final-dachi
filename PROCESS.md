@@ -302,6 +302,17 @@ the evidence is the real-browser `scrollWidth`, back to the viewport width
 once the note was allowed to break anywhere
 ([`0c67e35`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/commit/0c67e35)).
 
+The double-click guard only held while a post was in flight, and the next run
+asked how long that is. Against a local server, a post answered in a few
+milliseconds, well inside the 100--250ms between a person's two clicks. The
+second click then submitted the cleared form, and a blank stroke nobody meant
+landed for good. A CDP double-click hid this, since it fires both clicks
+microseconds apart; it took two clicks 150ms apart in real Chrome to show it.
+The page now ignores submits for a second after a post succeeds, which no
+deliberate next stroke is quick enough to hit. A test that clicks again the
+moment the post answers failed before the fix
+([`91eba67`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/commit/91eba67)).
+
 ## What's next
 
 Crit 10 adds server-side logging. The stream is the first part of the app
