@@ -131,8 +131,9 @@ function insertMark(mark) {
 }
 
 function announceStrokes(marks) {
-  if (marks.length === 1) announce.textContent = `a new stroke: ${marks[0].note || "no note"}`;
-  else if (marks.length > 1) announce.textContent = `${marks.length} new strokes`;
+  if (marks.length === 1)
+    announce.textContent = `a new stroke at the foot of the scroll: ${marks[0].note || "no note"}`;
+  else if (marks.length > 1) announce.textContent = `${marks.length} new strokes at the foot of the scroll`;
 }
 
 function releaseHeld(ownId) {

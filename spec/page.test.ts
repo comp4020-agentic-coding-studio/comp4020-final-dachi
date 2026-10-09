@@ -152,7 +152,12 @@ it("shows another hand's stroke within a second, with no reload, and announces i
     () => [...doc.querySelectorAll("#scroll li")].some((li) => li.textContent?.includes(theirs)),
     "the other hand's stroke to appear",
   );
-  expect(doc.getElementById("scroll-announce")!.textContent).toContain(theirs);
+  const announce = doc.getElementById("scroll-announce")!;
+  expect(announce.textContent).toContain(theirs);
+  // New strokes land at the foot of the scroll, screens below a phone's first
+  // view, so the announcement is shown as well as spoken.
+  expect(announce.textContent).toContain("at the foot of the scroll");
+  expect(announce.matches(".visually-hidden, [hidden]")).toBe(false);
 });
 
 // In a real browser the stream's copy of your own stroke usually beats the
