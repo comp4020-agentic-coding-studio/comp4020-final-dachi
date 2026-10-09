@@ -2214,3 +2214,12 @@ deliverable built on this same Vite/TS static template:
   one through crit 10. It's public now, and CI deploys every push to `main`
   in about a minute; poll the live URL to confirm, since `gh` isn't
   authenticated here.
+- **To rehearse "several people at once" for real, arm each `agent-browser
+  --session <name>` with a `setTimeout` to one shared wall-clock timestamp**
+  (`T=$(( $(date +%s%3N) + 3000 ))`, then `eval` a `requestSubmit()` delayed
+  by `T - Date.now()` in each session). Sequential CLI calls are hundreds of
+  ms apart and never collide. Separate sessions have separate cookie jars, so
+  they really are different visitors. On the final project both tabs agreed
+  on order and ownership. The rehearsal also showed that copy about the past
+  ("you've left a mark before") had been recomputed on every live update.
+  Derive "before this visit" state at load only.
