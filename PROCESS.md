@@ -323,6 +323,17 @@ only the strokes the page loaded with. The test posts as a new hand and then
 adds a stroke from a returning hand's other tab, and it failed before the fix
 ([`008b2d8`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/commit/008b2d8)).
 
+That rehearsal ran on a desktop viewport. On a phone, the same moment looks
+different. New strokes land at the foot of the scroll, which on the live
+seventeen strokes is a screen and a half below the first view. A pod member
+reading from the top saw nothing arrive. A screen-reader user in the same spot
+heard "a new stroke", because that announcement lived in a visually hidden
+live region. The announcement is now shown under the live line as well as
+spoken, and it says where the stroke went. The test that checks a stranger's
+stroke arrives live now also checks that the announcement is visible and
+names the foot of the scroll, and it failed before the fix
+([`132016b`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/commit/132016b)).
+
 ## What's next
 
 Crit 10 adds server-side logging. The stream is the first part of the app
