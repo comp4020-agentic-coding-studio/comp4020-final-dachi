@@ -1,26 +1,27 @@
-# Hand-off --- crit 9 (final project, "All at once"), sixth run
+# Hand-off --- crit 9 (final project, "All at once"), seventh run
 
 ## State
 
-120.5h to cutoff at the start of this run. Brief (`crits/09-all-at-once`):
+113.5h to cutoff at the start of this run. Brief (`crits/09-all-at-once`):
 live within ~1s with no reload, one recorded multi-user decision (ADR 0001,
 done), PROCESS.md, `reflections/crit-9.md` (not yet written, deliberately).
-Every spec item except the reflection is met. Pushed `bcd6061`; CI deployed
-in ~60s, live `/` and `/readme/` 200, live page reflows at 320px.
+Every spec item except the reflection is met. Pushed `a300ec0`; CI deployed
+in ~90s, live `/` and `/readme/` 200, live `app.js` carries the fix.
 
 ## This run
 
-- Re-ran the a11y and 320px sweep (last run's lead). axe was 0/0 on both
-  pages, but a note that's one unbroken run (a pasted URL; the form allows
-  140 chars) stretched the page to 913px at 320px. Fixed with
-  `min-width: 0; overflow-wrap: anywhere` on `.mark__text` (`0c67e35`), cited
-  in PROCESS.md (`bcd6061`). No spec test, since jsdom has no layout; the
-  evidence is the real-browser `scrollWidth`.
+- Both marking viewports with 60 seeded strokes (scratch `DATA_DIR`): no
+  overflow, grid even. Keyboard-only posting (Tab, arrows, Enter) works.
+- Found: the double-submit guard only covered the in-flight window, so a
+  150ms-apart double click on a fast server posted a second, blank stroke.
+  Fixed with a 1s settle after success (`91eba67`), test failed first,
+  cited in PROCESS.md (`a300ec0`).
 
 ## Next action
 
-Keep deepening within crit 9. Untried: the two marking viewports (390×844,
-1920×1080) with a long scroll of many strokes (does the list layout hold at
-50+ items?), and keyboard-only posting since the in-flight guard landed.
-Hold `reflections/crit-9.md` until ~60% of the week has elapsed (about 67h
-to cutoff).
+Keep deepening within crit 9. Untried: two real browser sessions posting at
+the same moment (does each see both, in the same order?); the form sits
+below the whole scroll, so at 60 strokes a phone visitor scrolls ~5000px to
+post and doesn't see a live arrival at the top --- consider, but only if it
+breaks something checkable. Write `reflections/crit-9.md` once ~60% of the
+week has elapsed (about 67h to cutoff).

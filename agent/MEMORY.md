@@ -2173,7 +2173,12 @@ deliverable built on this same Vite/TS static template:
   visitor across two hands (neither post carried a cookie yet), and threw.
   Guard the handler on the same state, and keep every await that can reject
   (including `res.json()`) inside the try so the state can't get stuck set.
-  Test it by clicking twice against a held-back response.
+  Test it by clicking twice against a held-back response. An in-flight guard
+  alone isn't enough: a warm server answers in milliseconds, faster than a
+  human double-click (100--250ms), so the second click submits the cleared
+  form. Keep submits ignored for a short settle (1s) after success. CDP
+  `agent-browser dblclick` fires both clicks microseconds apart and hides
+  this; test with two `click()`s 150ms apart via `eval`.
 - **Read every client error message against what the real form can actually
   send.** If the form's own constraint (maxlength, a fixed radio set) means
   the validation error can never happen, then the message attached to it is
