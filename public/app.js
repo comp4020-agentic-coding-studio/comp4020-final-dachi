@@ -30,6 +30,11 @@ const rendered = new Map();
 // first as someone else's. Stream arrivals wait here until the post answers
 // with its id, so only strangers' strokes get announced.
 let held = null;
+// A warm machine can answer before a person's second click lands, which would
+// then post the cleared form as a blank stroke; submits wait out this long
+// after a post succeeds. A deliberate next stroke is never that quick.
+const SETTLE_MS = 1000;
+let settledAt = 0;
 
 function buildPalette() {
   PALETTE.forEach(({ color, name }, i) => {
@@ -212,7 +217,7 @@ form.addEventListener("submit", async (event) => {
   event.preventDefault();
   // A double click or a second Enter mustn't leave the stroke twice on a
   // scroll that never forgets; held is set for exactly as long as a post is.
-  if (held) return;
+  if (held || Date.now() < settledAt) return;
   const color = new FormData(form).get("color");
   const note = noteInput.value;
 
@@ -246,6 +251,7 @@ form.addEventListener("submit", async (event) => {
     return;
   }
 
+  settledAt = Date.now() + SETTLE_MS;
   noteInput.value = "";
   statusEl.textContent = "added to the scroll.";
   insertMark(mark);

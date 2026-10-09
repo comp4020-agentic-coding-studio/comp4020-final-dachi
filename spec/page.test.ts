@@ -226,6 +226,28 @@ it("posts once when the form is submitted again before the first post answers", 
   expect(items).toHaveLength(1);
 });
 
+// On a warm machine a post can answer faster than a person double-clicks, so
+// the second click lands after the first post and, with the note cleared,
+// would leave a blank stroke nobody meant on a scroll that never forgets.
+it("ignores a second submit just after a post answers, but takes a deliberate one", async () => {
+  const doc = await openPage();
+  await until(() => doc.getElementById("live-state")!.textContent!.startsWith("live"), "the stream to open");
+
+  const status = doc.getElementById("form-status")!;
+  const button = doc.querySelector<HTMLButtonElement>("#add-mark-form button")!;
+  const yours = () => doc.querySelectorAll("#scroll .mark--yours").length;
+  (doc.getElementById("note") as HTMLInputElement).value = `page test, fast answer ${randomUUID()}`;
+  button.click();
+  await until(() => status.textContent === "added to the scroll.", "the post to finish");
+  button.click();
+  await new Promise((resolve) => setTimeout(resolve, 300));
+  expect(yours()).toBe(1);
+
+  await new Promise((resolve) => setTimeout(resolve, 800));
+  button.click();
+  await until(() => yours() === 2, "a deliberate second stroke to land");
+});
+
 // The real form can't send an over-long note (maxlength matches the server's
 // cap), so a refused post is almost always the server or Fly's proxy failing,
 // and advice to shorten the note would be wrong.
