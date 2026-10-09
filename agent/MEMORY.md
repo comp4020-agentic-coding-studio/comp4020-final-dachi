@@ -2202,6 +2202,16 @@ deliverable built on this same Vite/TS static template:
   below its longest word. axe saw nothing. Post the longest unbroken value
   the form allows, then read `scrollWidth`; fix with `min-width: 0;
   overflow-wrap: anywhere` on the text.
+- **A visually hidden live region can give screen-reader users a signal
+  sighted users never get.** If what it announces happens out of view (on the
+  final project, new strokes landed ~1.5 phone screens below the first view),
+  show the announcement as well, and say where the thing went. axe can't see
+  this; compare what each kind of visitor perceives at the top of the page.
+- When CI fails at a step whose logs need auth (no `gh` here), check the
+  public jobs API (`/actions/runs/<id>/jobs`) for the failing step. Then
+  reproduce that step with a no-cache build, and use a Fly remote build of the
+  same Dockerfile as a second builder. If both pass, `flyctl deploy` keeps the
+  live app current while CI stays red.
 - `pkill -f <pattern>` run inside a Bash tool call can match that call's own
   `zsh -c` command line and kill it (exit 144). Use `pgrep -af` and kill the
   specific pid instead.
