@@ -35,6 +35,11 @@ let held = null;
 // after a post succeeds. A deliberate next stroke is never that quick.
 const SETTLE_MS = 1000;
 let settledAt = 0;
+// Every tab of this browser posts as the same hand, but a stream only knows
+// the hand it opened with, so a tab opened before the hand existed would show
+// a sibling tab's strokes as a stranger's. The tab that posts tells the others.
+const ownIds = new Set();
+const siblings = "BroadcastChannel" in window ? new BroadcastChannel("long-scroll-hand") : null;
 
 function buildPalette() {
   PALETTE.forEach(({ color, name }, i) => {
@@ -108,6 +113,7 @@ function updateWelcome() {
 // their hand existed, so it can deliver their own first stroke as someone
 // else's; the post's own response, which knows better, replaces it.
 function insertMark(mark) {
+  if (ownIds.has(mark.id)) mark = { ...mark, yours: true };
   const existing = rendered.get(mark.id);
   if (existing) {
     if (mark.yours && !existing.classList.contains("mark--yours")) {
@@ -198,7 +204,7 @@ function connect() {
   own.addEventListener("mark", (event) => {
     heardAt = Date.now();
     const mark = JSON.parse(event.data);
-    if (insertMark(mark) && !mark.yours) {
+    if (insertMark(mark) && !mark.yours && !ownIds.has(mark.id)) {
       if (held) held.push(mark);
       else announceStrokes([mark]);
     }
@@ -258,6 +264,12 @@ form.addEventListener("submit", async (event) => {
   statusEl.textContent = "added to the scroll.";
   insertMark(mark);
   releaseHeld(mark.id);
+  siblings?.postMessage(mark);
+});
+
+siblings?.addEventListener("message", ({ data: mark }) => {
+  ownIds.add(mark.id);
+  if (rendered.has(mark.id)) insertMark(mark);
 });
 
 buildPalette();

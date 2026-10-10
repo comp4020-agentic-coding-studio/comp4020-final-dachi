@@ -35,11 +35,21 @@ afterEach(() => {
 
 const opened: { url: string; closed: boolean }[] = [];
 
-async function openPage(cookie = "", { holdPostMs = 0, postStatus = 0 } = {}): Promise<Document> {
+// Tabs of one browser share a cookie jar and can reach each other on a
+// BroadcastChannel; pages opened with the same jar stand in for that.
+async function openPage(
+  cookie = "",
+  { holdPostMs = 0, postStatus = 0, jar }: { holdPostMs?: number; postStatus?: number; jar?: { cookie: string } } = {},
+): Promise<Document> {
   const html = await (await fetch(new URL("/", baseUrl))).text();
   const script = await (await fetch(new URL("/app.js", baseUrl))).text();
   const { window } = new JSDOM(html, { url: baseUrl, runScripts: "outside-only" });
+  if (jar) {
+    Object.defineProperty(window, "BroadcastChannel", { value: BroadcastChannel });
+    cookie = jar.cookie;
+  }
   window.fetch = (async (input: string, init: RequestInit = {}) => {
+    if (jar) cookie = jar.cookie;
     // stands in for Fly's proxy answering when it couldn't reach the machine
     if (init.method === "POST" && postStatus) return new Response("", { status: postStatus });
     const res = await fetch(new URL(input, baseUrl), {
@@ -47,6 +57,7 @@ async function openPage(cookie = "", { holdPostMs = 0, postStatus = 0 } = {}): P
       headers: { ...(init.headers as Record<string, string>), cookie, origin: baseUrl },
     });
     cookie = res.headers.get("set-cookie")?.split(";")[0] ?? cookie;
+    if (jar) jar.cookie = cookie;
     if (init.method === "POST") await new Promise((resolve) => setTimeout(resolve, holdPostMs));
     return res;
   }) as typeof window.fetch;
@@ -313,4 +324,26 @@ it("reopens a stream that has gone silent, from the last stroke it showed", asyn
   expect(opened.at(-1)).not.toBe(first);
   expect(opened.at(-1)!.url).toContain(`after=${shown}`);
   await until(() => liveState.textContent!.startsWith("live"), "the stream to reopen");
+});
+
+it("marks a sibling tab's strokes as yours, though both opened before the hand existed", async () => {
+  const jar = { cookie: "" };
+  const first = await openPage("", { jar });
+  const second = await openPage("", { jar });
+  for (const doc of [first, second])
+    await until(() => doc.getElementById("live-state")!.textContent!.startsWith("live"), "the stream");
+
+  const fromFirst = `page test, first tab ${randomUUID()}`;
+  const fromSecond = `page test, second tab ${randomUUID()}`;
+  for (const [doc, note] of [[first, fromFirst], [second, fromSecond]] as const) {
+    (doc.getElementById("note") as HTMLInputElement).value = note;
+    (doc.getElementById("add-mark-form") as HTMLFormElement).requestSubmit();
+    await until(() => doc.getElementById("form-status")!.textContent === "added to the scroll.", "the post");
+  }
+
+  const text = (doc: Document, note: string) =>
+    [...doc.querySelectorAll("#scroll li")].find((li) => li.textContent!.includes(note))?.textContent ?? "";
+  for (const doc of [first, second])
+    for (const note of [fromFirst, fromSecond])
+      await until(() => text(doc, note).endsWith(" — yours"), `"${note}" marked yours in both tabs`);
 });
