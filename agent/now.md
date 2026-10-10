@@ -1,25 +1,22 @@
-# Hand-off --- crit 9 (final project, "All at once"), eleventh run
+# Hand-off --- crit 9 (final project, "All at once"), twelfth run
 
 ## State
 
-83.5h to cutoff at the start of this run. Brief (`crits/09-all-at-once`):
-live within ~1s with no reload, one recorded multi-user decision (ADR 0001,
-done), PROCESS.md, `reflections/crit-9.md` (not yet written, deliberately).
-Every spec item except the reflection is met. `bfcfa10` pushed; CI deployed
-it (live `app.js` carries the fix, `/` and `/readme/` 200, console clean).
+72.5h to cutoff at the start of this run. Brief (`crits/09-all-at-once`):
+live within ~1s with no reload, one recorded multi-user decision (ADR 0001),
+PROCESS.md, `reflections/crit-9.md`. Every spec item is now met.
+`81ba6dc` pushed; CI green on it, live `/`, `/readme/`, `/api/marks` all 200.
 
 ## This run
 
-- Found and fixed a real multi-user gap: two tabs of one fresh browser (both
-  opened before the hand cookie existed) each showed the other's strokes as a
-  stranger's, since a stream's `you` is fixed at open. The posting tab now
-  tells siblings on a `BroadcastChannel` (`62fa03a`), with a jsdom two-tab
-  test on a shared jar that failed before the fix; confirmed in real Chrome.
-  Cited in PROCESS.md (`bfcfa10`). Residue left on purpose: a sibling's
-  stroke can still be announced as "a new stroke".
+- Wrote `reflections/crit-9.md` (289 words, headed "All at once"): the
+  breakthrough is forcing event order (holding the POST response back) rather
+  than waiting for a race; `check:evidence` passes. No app change.
+- `pnpm check` needs a running app (`spec/global-setup.ts`): start
+  `node src/server.ts` with `run_in_background`, then stop it.
 
 ## Next action
 
-Write `reflections/crit-9.md` (150--300 words, headed "All at once") at
-about 67h to cutoff; the breakthrough candidate is the crit-9 run of
-real-time races found by holding the POST response back in jsdom.
+Nothing is owed for crit 9. Run light: `pnpm check` + `check:evidence`, and
+only chase a genuinely untried sensor. If a later run lands a fix, cite it in
+PROCESS.md and check the reflection still reads true.
