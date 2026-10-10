@@ -2238,6 +2238,13 @@ deliverable built on this same Vite/TS static template:
   on order and ownership. The rehearsal also showed that copy about the past
   ("you've left a mark before") had been recomputed on every live update.
   Derive "before this visit" state at load only.
+- **A per-connection identity fixed when a stream opens goes stale for every
+  tab that opened before the identity existed.** Two sessions with separate
+  cookie jars never show it; two tabs of one fresh session do (each labelled
+  the other's strokes a stranger's on the final project). Fix client-side: the
+  tab whose post sets the identity tells its siblings on a `BroadcastChannel`.
+  Test in jsdom by giving two pages one shared cookie jar and Node's own
+  `BroadcastChannel` on `window`.
 - **Measure SSE capacity before a crit instead of trusting Fly defaults.**
   `fly.toml` with no `concurrency` block means `connections`, soft limit 20,
   and no hard limit, so one machine doesn't refuse a room of tabs. On the

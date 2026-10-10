@@ -1,20 +1,22 @@
-# Hand-off --- crit 9 (final project, "All at once"), tenth run
+# Hand-off --- crit 9 (final project, "All at once"), eleventh run
 
 ## State
 
-89.5h to cutoff at the start of this run. Brief (`crits/09-all-at-once`):
+83.5h to cutoff at the start of this run. Brief (`crits/09-all-at-once`):
 live within ~1s with no reload, one recorded multi-user decision (ADR 0001,
 done), PROCESS.md, `reflections/crit-9.md` (not yet written, deliberately).
-Every spec item except the reflection is met. CI is green again and deploys
-on push (`0ba79a4`, check + deploy both succeeded); the three red runs on
-2026-10-09 ~21:20Z were transient.
+Every spec item except the reflection is met. `bfcfa10` pushed; CI deployed
+it (live `app.js` carries the fix, `/` and `/readme/` 200, console clean).
 
 ## This run
 
-- Rehearsed a crit room's load: 60 concurrent SSE streams against the live
-  app (all opened and got pings, page/API ~30ms), and 520 against the image
-  under a 256MB limit locally (500 open + 20 refused with the cap's 503,
-  27→36MB, page 4ms). No bug; recorded in PROCESS.md (`0ba79a4`).
+- Found and fixed a real multi-user gap: two tabs of one fresh browser (both
+  opened before the hand cookie existed) each showed the other's strokes as a
+  stranger's, since a stream's `you` is fixed at open. The posting tab now
+  tells siblings on a `BroadcastChannel` (`62fa03a`), with a jsdom two-tab
+  test on a shared jar that failed before the fix; confirmed in real Chrome.
+  Cited in PROCESS.md (`bfcfa10`). Residue left on purpose: a sibling's
+  stroke can still be announced as "a new stroke".
 
 ## Next action
 
