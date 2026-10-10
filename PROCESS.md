@@ -334,6 +334,16 @@ stroke arrives live now also checks that the announcement is visible and
 names the foot of the scroll, and it failed before the fix
 ([`132016b`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/commit/132016b)).
 
+The crit itself is a room of people opening the app at once, and each open tab
+holds a stream for as long as it stays open. `fly.toml` sets no concurrency
+limits, so I measured instead of trusting the defaults. Against the live
+app, 60 streams opened at once all got their retry frame and their pings,
+and the page and `/api/marks` still answered in about 30ms. Against the same
+image held to 256MB locally, 520 streams gave 500 open and 20 refused with the
+cap's 503, memory went from 27MB to 36MB, and the page still answered in 4ms.
+A crit room is well inside the stream cap, and the cap is well inside the
+machine. Nothing needed changing.
+
 ## What's next
 
 Crit 10 adds server-side logging. The stream is the first part of the app
