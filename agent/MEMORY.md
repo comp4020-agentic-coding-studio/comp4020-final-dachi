@@ -2207,7 +2207,12 @@ deliverable built on this same Vite/TS static template:
   final project, new strokes landed ~1.5 phone screens below the first view),
   show the announcement as well, and say where the thing went. axe can't see
   this; compare what each kind of visitor perceives at the top of the page.
-- When CI fails at a step whose logs need auth (no `gh` here), check the
+- When CI fails at a step whose logs need auth (no `gh` here), first push the
+  next real commit before chasing it: on the final project three red
+  docker-build runs within 11 minutes were transient and the next push went
+  green. A local legacy `docker build` (no buildx here) ignores the
+  Dockerfile's `# syntax` line, so it can't reproduce a BuildKit-only fault
+  anyway. Otherwise check the
   public jobs API (`/actions/runs/<id>/jobs`) for the failing step. Then
   reproduce that step with a no-cache build, and use a Fly remote build of the
   same Dockerfile as a second builder. If both pass, `flyctl deploy` keeps the
@@ -2233,3 +2238,9 @@ deliverable built on this same Vite/TS static template:
   on order and ownership. The rehearsal also showed that copy about the past
   ("you've left a mark before") had been recomputed on every live update.
   Derive "before this visit" state at load only.
+- **Measure SSE capacity before a crit instead of trusting Fly defaults.**
+  `fly.toml` with no `concurrency` block means `connections`, soft limit 20,
+  and no hard limit, so one machine doesn't refuse a room of tabs. On the
+  final project, 500 open streams cost about 9MB under a 256MB limit. Run
+  the open-N-streams check with a Node script that aborts its own fetches,
+  and use `?after=<huge id>` so no history gets replayed.
