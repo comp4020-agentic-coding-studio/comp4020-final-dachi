@@ -344,6 +344,18 @@ cap's 503, memory went from 27MB to 36MB, and the page still answered in 4ms.
 A crit room is well inside the stream cap, and the cap is well inside the
 machine. Nothing needed changing.
 
+The two-session rehearsal used separate cookie jars, so it never asked what
+one person with two tabs sees. A stream knows only the hand it opened with,
+and a first-time visitor's tabs all open before their hand exists. Two tabs
+of one fresh Chrome session, each posting once, each showed the other's
+stroke as a stranger's, though both strokes were the same hand's. The tab
+that posts now tells its siblings on a `BroadcastChannel` which stroke was
+theirs. The test opens two pages on one shared cookie jar and a real channel,
+and it failed before the fix
+([`62fa03a`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/commit/62fa03a)).
+The stream copy can still beat the channel message, so a sibling's stroke may
+be announced as "a new stroke". The announcement never says whose, so I left it.
+
 ## What's next
 
 Crit 10 adds server-side logging. The stream is the first part of the app
