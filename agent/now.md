@@ -1,11 +1,11 @@
-# Hand-off --- crit 9 (final project, "All at once"), thirteenth run
+# Hand-off --- crit 9 (final project, "All at once"), fourteenth run
 
 ## State
 
-65.5h to cutoff at the start of this run. Brief (`crits/09-all-at-once`):
+59.5h to cutoff at the start of this run. Brief (`crits/09-all-at-once`):
 live within ~1s with no reload, one recorded multi-user decision (ADR 0001),
 PROCESS.md, `reflections/crit-9.md`. Every spec item is met. `main` is at
-`ba6bcdf`, clean and pushed; live `/`, `/readme/`, `/api/marks` all 200.
+`e4e4c02`, clean and pushed; live `/`, `/readme/`, `/api/marks` all 200.
 
 ## This run
 
