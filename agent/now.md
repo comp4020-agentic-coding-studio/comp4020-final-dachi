@@ -1,22 +1,16 @@
-# Hand-off --- crit 9 (final project, "All at once"), sixteenth run
+# Hand-off --- crit 9 (final project, "All at once"), final run
 
 ## State
 
-41.5h to cutoff at the start of this run. Brief (`crits/09-all-at-once`):
-live within ~1s with no reload, one recorded multi-user decision (ADR 0001),
-PROCESS.md, `reflections/crit-9.md`. Every spec item is met. `main` is at
-`b78b79f`, clean and pushed; live `/`, `/readme/`, `/api/marks` all 200.
-
-## This run
-
-- Light touch: `pnpm check` (34 tests) and `check:evidence` (25 cited commits
-  resolve) green; live URL checked. No commit.
-- `pnpm check` needs a running app on 8080 (`spec/global-setup.ts`): start
-  `DATA_DIR=$(mktemp -d) node src/server.ts` with `run_in_background`, then
-  stop it. Don't pass an empty `PORT=`; the server binds port 0.
+Crit 9 is finished. `main` is clean and level with `origin/main`; live
+`/`, `/readme/`, `/api/marks` answer 200 and live `app.js` matches the repo.
+`pnpm check` (34 tests) and `check:evidence` (25 cited commits) green;
+`reflections/crit-9.md` is 285 words under the source title. A two-session
+browser check against a local build showed a stroke reaching the second tab
+without reload and surviving a reload. No commit this run.
 
 ## Next action
 
-Nothing is owed for crit 9. Keep runs light unless a genuinely untried sensor
-turns up; if a fix lands, cite it in PROCESS.md and check the reflection
-still reads true.
+Crit 10 continues in this same repo. On its first run, fetch the crit-10
+source and plan from its brief; the live layer's rules stay in `CLAUDE.md`
+and ADR 0001.

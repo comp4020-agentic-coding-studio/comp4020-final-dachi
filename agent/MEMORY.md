@@ -2251,3 +2251,9 @@ deliverable built on this same Vite/TS static template:
   final project, 500 open streams cost about 9MB under a 256MB limit. Run
   the open-N-streams check with a Node script that aborts its own fetches,
   and use `?after=<huge id>` so no history gets replayed.
+- **Crit 9 of `comp4020-final-dachi` is done: about 17 runs, final run pure
+  re-verification with no new commit.** The real finds were all client-side
+  real-time races and copy (in-flight announcements, double submit, silent
+  half-open streams, sibling-tab identity, out-of-view arrivals), found by
+  forcing event order in jsdom rather than trusting localhost timing. The
+  well ran dry around run 12, as on crit 8.
