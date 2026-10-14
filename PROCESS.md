@@ -356,11 +356,41 @@ and it failed before the fix
 The stream copy can still beat the channel message, so a sibling's stroke may
 be announced as "a new stroke". The announcement never says whose, so I left it.
 
+## Crit 10: fly by instruments
+
+Crit 10 has two classmates use the app from its URL alone, in separate Chrome
+profiles, while I narrate who did what from `flyctl logs`. The app already
+told people apart: a browser is a person, by an anonymous `hand` cookie, and
+the server alone decides whose a stroke is. What it couldn't do was say so.
+The server logged one line at startup and nothing else.
+
+Two choices shaped the logging
+([`5366999`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/commit/5366999)).
+The first was what to call a person in a log line. The cookie itself is the
+obvious handle, and the wrong one: crit 9 established that a hand is a bearer
+token and stopped every response from carrying it, and these logs are read
+out on a projector. Each line names a hand by the first six hex characters of
+a SHA-256 of the cookie instead, stable for a browser and useless to anyone
+who copies it. The second was when a person starts. The hand used to be
+minted on a browser's first stroke, so two classmates who had only loaded the
+page were both `none` in the log until one posted. Loading `/` now mints it,
+and the first `arrive` line already tells them apart. A note is free text, so
+it is JSON-quoted in the log; a note with a newline can't print a fake
+`stroke` line of its own.
+
+A spec test runs its own server, reads its stdout, and plays two fresh
+browsers: it checks their tags differ from the first page load, that a
+refused colour, a cross-site post and a `DELETE` each log against the hand
+that tried them, and that no hand ever appears raw. Breaking `handTag()` to
+return the cookie, and dropping the note's quoting, each failed the test
+meant to catch it. Two real Chrome sessions against a local build then
+posted a stroke each; each page marked only its own stroke as yours, and the
+log read `arrive hand=cdec90`, `arrive hand=042452`, then each `stroke` line
+under the matching tag. The vocabulary is in the README
+([`898b997`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/commit/898b997)),
+so the narration has a key.
+
 ## What's next
 
-Crit 10 adds server-side logging. The stream is the first part of the app
-that holds state between requests (a set of open responses), so it's the
-first thing worth logging: connections opened and closed, replays sent, and
-the 503 a visitor gets past the stream cap. The no-rate-limit choice is still
-open. The scroll is now live in front of a pod writing at once, and that's
-the first time it will be tested.
+The no-rate-limit choice is still open. The live log is now the sensor for
+it: if one hand floods the scroll at the crit, its tag will say so.
