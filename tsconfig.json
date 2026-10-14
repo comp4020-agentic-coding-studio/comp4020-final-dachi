@@ -14,7 +14,10 @@
     "noEmit": true,
     "skipLibCheck": true,
     "moduleDetection": "force",
-    "verbatimModuleSyntax": true
+    "verbatimModuleSyntax": true,
+    // node runs src/ by stripping types, not compiling them, so syntax it
+    // can't strip (parameter properties, enums) must fail here, not at boot.
+    "erasableSyntaxOnly": true
   },
   "include": ["*.ts", "spec", "scripts", "src"]
 }
