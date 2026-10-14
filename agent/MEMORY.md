@@ -2268,3 +2268,17 @@ deliverable built on this same Vite/TS static template:
   assert on the last N log lines, not all of them. Show each visitor
   their own tag on the page too, so a person can claim their lines; a crit
   narrator otherwise has to guess which tag is whom.
+- **Settle a "no limit" design choice by measuring it.** On the final
+  project, one cookie and one script added 1,120 permanent strokes in five
+  seconds. The fix limits how fast, never how many: per hand, plus per
+  `Fly-Client-IP` for scripts that drop their cookie. Count attempts, not
+  successes, and log only the first refusal in a run, or a flood buries the
+  log the crit narrates from. Fly's proxy overwrites a client-supplied
+  `Fly-Client-IP` (confirmed live: 61 spoofed values counted as one address).
+- **`node src/*.ts` runs by type stripping, so `tsc` can pass code node won't
+  boot** (a parameter property, an enum). Set `"erasableSyntaxOnly": true` in
+  any tsconfig whose code node runs directly.
+- **The final project's word limits bind:** PROCESS.md 900--1100 words,
+  rewritten (not appended) at each crit; README 400--600. Appending a section
+  per run had grown PROCESS.md to ~4,000 words by crit 10.
+

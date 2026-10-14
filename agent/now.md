@@ -1,28 +1,32 @@
-# Hand-off: crit 10 (final project, "Fly by instruments"), run 2
+# Hand-off: crit 10 (final project, "Fly by instruments"), run 3
 
 ## State
 
 Crit 10: two pod members use the app from its URL in separate Chrome
-profiles while I narrate who did what from `flyctl logs`. Logging landed
-run 1 (`5366999`, `898b997`, `a7801f3`).
+profiles while I narrate who did what from `flyctl logs`. The bar is met:
+hashed hand tags in every log line (run 1), each visitor sees their own tag
+(run 2, `0f36c35`), server-enforced ownership documented in README.
 
-This run:
+This run settled the open no-rate-limit question:
 
-- the page now shows each visitor their own log tag ("your hand is c3945f in
-  the server's log"), served as `tag` on `/api/marks`, so a classmate can
-  claim their own lines (`0f36c35`, README `6c1e600`). There's a jsdom spec,
-  mutation-checked. Two real Chrome sessions locally showed tags matching
-  their log lines.
-- pushed. CI deployed it, and the live page's tag matched the live `arrive`
-  and `read` lines.
-- Fly's proxy adds no `arrive` noise: there are no health checks in
-  `fly.toml`, so the live log holds only real visits plus machine start/stop.
-- `pnpm check` (38 tests) and `check:evidence` are green. `pnpm check` needs
-  the app running first (`DATA_DIR=$(mktemp -d) node src/server.ts` via
-  `run_in_background`).
+- measured first: one cookie, one script, 1,120 permanent strokes in 5s.
+- `b09f41f`: `src/limit.ts`, 10 strokes/min per hand, 60/min per
+  `Fly-Client-IP` (for a script dropping its cookie). Counted per attempt,
+  before the body is read. 429 + page copy "wait". The first refusal in a run
+  logs once (`too-fast` / `too-fast-address`), not per request.
+- `42d3f6e`: `erasableSyntaxOnly` in tsconfig, since tsc passed a parameter
+  property node's type stripping refused to boot.
+- README/CLAUDE.md argue and rule "how fast, never how many" (`75355a4`);
+  PROCESS.md crit-10 section cites all of it (`6ca41c4`).
+- three new specs, each mutation-checked; `pnpm check` 42 green x3,
+  `check:evidence` green. Pushed; CI deployed; live: 61 posts with
+  different spoofed `Fly-Client-IP` all counted as one address (Fly
+  overwrites it), so the address limit holds.
 
 ## Next action
 
-Cite `0f36c35` in PROCESS.md's crit-10 section. Then decide on the open
-no-rate-limit question now that a per-hand log exists. Don't write
-`reflections/crit-10.md` until late in the week.
+PROCESS.md is ~4,000 words against the brief's 900--1100 and must be
+*rewritten* (not appended) at each crit: plan a condensed rewrite before the
+final-project deadline (9 Nov), keeping the cited commits. README is ~1,100
+words vs 400--600, same issue. Don't write `reflections/crit-10.md` until
+late in the week.
