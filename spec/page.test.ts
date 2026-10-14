@@ -1,5 +1,5 @@
 import { JSDOM } from "jsdom";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { afterEach, expect, inject, it } from "vitest";
 import { openStream, type SseStream } from "./sse.ts";
 
@@ -130,6 +130,17 @@ it("says in text which strokes are yours, not just in ink", async () => {
   const welcome = doc.getElementById("welcome-back")!;
   expect(welcome.hidden).toBe(false);
   expect(welcome.textContent).toMatch(/still there/);
+});
+
+it("tells a visitor the tag their hand goes by in the server's log", async () => {
+  const cookie = await addStroke(`page test, tag ${randomUUID()}`);
+  const hand = cookie.split("=")[1];
+  const tag = createHash("sha256").update(hand).digest("hex").slice(0, 6);
+  const doc = await openPage(cookie);
+  const shown = doc.getElementById("your-tag")!;
+  await until(() => !shown.hidden, "the tag to show");
+  expect(shown.textContent).toContain(tag);
+  expect(doc.body.innerHTML).not.toContain(hand);
 });
 
 it("offers only native, labelled, keyboard-reachable controls", async () => {

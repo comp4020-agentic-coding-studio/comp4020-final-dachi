@@ -233,7 +233,9 @@ const server = createServer(async (req, res) => {
         own: you ? marks.filter((m) => m.hand === you).length : 0,
       });
       res.writeHead(200, { "content-type": "application/json" });
-      res.end(JSON.stringify({ marks: marks.map((m) => toPublic(m, you)) }));
+      // The visitor's own tag, so a person can say which log lines are theirs.
+      // It names only the requester's own hand, and can't be turned back into it.
+      res.end(JSON.stringify({ marks: marks.map((m) => toPublic(m, you)), tag: you ? handTag(you) : null }));
       return;
     }
     if (req.method === "GET" && url.pathname === "/api/marks/stream") {

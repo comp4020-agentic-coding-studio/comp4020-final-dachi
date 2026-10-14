@@ -21,6 +21,7 @@ const noteInput = document.getElementById("note");
 const statusEl = document.getElementById("form-status");
 const liveState = document.getElementById("live-state");
 const announce = document.getElementById("scroll-announce");
+const yourTag = document.getElementById("your-tag");
 
 // The highest stroke id on the page. Strokes only ever get appended with a
 // higher id, so this is all a reconnecting stream needs to say what it missed.
@@ -92,6 +93,14 @@ function markToListItem(mark) {
 
   li.append(stroke, text);
   return li;
+}
+
+// The server's log names each hand by this tag, so a visitor can point at
+// their own lines when telling someone what they did or what went wrong.
+function showTag(tag) {
+  if (!tag) return;
+  yourTag.hidden = false;
+  yourTag.textContent = `your hand is ${tag} in the server's log.`;
 }
 
 // Only the load calls this: a stroke made or arriving during this visit isn't
@@ -166,6 +175,7 @@ async function load() {
     const res = await fetch("/api/marks");
     const data = await res.json();
     render(data.marks);
+    showTag(data.tag);
     return true;
   } catch {
     scrollList.innerHTML = "";
