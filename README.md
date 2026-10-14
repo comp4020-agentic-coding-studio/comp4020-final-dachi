@@ -52,7 +52,8 @@ a stroke reaches every other open tab within a second, with no reload; a
 tab that reconnects is sent exactly the strokes it missed, in order; no
 response or stream ever carries another visitor's `hand`; and the server's
 log tells two first-time visitors apart from their first page load without
-ever printing either one's hand.
+ever printing either one's hand, and the page shows each visitor the tag
+their own lines carry.
 
 Judged, by a visitor reading this page: whether the scroll reads as one
 continuous, shared object rather than a list of comments; whether finding
@@ -103,5 +104,7 @@ Every line names a hand by a six-character tag, the start of a hash of its
 cookie. The same browser always gets the same tag, so two classmates are
 `hand=cdec90` and `hand=042452` from their first page load on. The tag can't
 be turned back into the cookie, which matters because a hand is a bearer
-token and these logs get read out on a projector. A note is printed quoted,
+token and these logs get read out on a projector. The page shows each
+visitor their own tag, under the live line, so someone can say "that's me"
+about a line without anyone guessing. A note is printed quoted,
 so one with a line break in it can't pass for a line of its own.
