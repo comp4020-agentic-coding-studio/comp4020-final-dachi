@@ -35,7 +35,9 @@ years rather than resetting each session.
 distinguished by an anonymous cookie, nothing more); editing or deleting a
 stroke once added (the scroll is append-only, on purpose &mdash; that's a
 claim, not an oversight); any limit on how many strokes one hand can add
-(a guestbook you can only sign once is a worse guestbook); any sign of who
+(a guestbook you can only sign once is a worse guestbook), though there is
+one on how fast, since a hand adding hundreds a second buries everyone
+else's; any sign of who
 else is watching (a scroll records hands that have written, not hands that
 are looking).
 
@@ -53,7 +55,9 @@ tab that reconnects is sent exactly the strokes it missed, in order; no
 response or stream ever carries another visitor's `hand`; and the server's
 log tells two first-time visitors apart from their first page load without
 ever printing either one's hand, and the page shows each visitor the tag
-their own lines carry.
+their own lines carry. A hand that adds more than ten strokes in a minute is
+asked to wait, and so is one address adding more than sixty under fresh
+hands; neither touches anyone else's strokes.
 
 Judged, by a visitor reading this page: whether the scroll reads as one
 continuous, shared object rather than a list of comments; whether finding
@@ -96,7 +100,7 @@ narrate a session without anyone touching the app. Each line starts with
 what happened: `arrive` (loaded the page, `new=true` the first time), `read`
 (fetched the scroll, with how many strokes were theirs), `watch` and `leave`
 (a live stream opened or closed, with how many are open), `stroke` (added
-one, with its id, ink and note), `refuse` (a write turned away, and why) and
+one, with its id, ink and note), `refuse` (a write turned away, and why; `too-fast` once per run of them) and
 `miss` (an unknown route, with its method, so an attempt to `DELETE` a
 stroke shows up as one).
 
