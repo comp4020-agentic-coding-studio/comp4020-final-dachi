@@ -2265,4 +2265,6 @@ deliverable built on this same Vite/TS static template:
   dedicated server in the spec and read its stdout, since the shared CI app's
   stdout isn't visible. Mutation-check by making the tag return the raw
   cookie. A spec's own readiness `fetch(origin)` also counts as a visit, so
-  assert on the last N log lines, not all of them.
+  assert on the last N log lines, not all of them. Show each visitor
+  their own tag on the page too, so a person can claim their lines; a crit
+  narrator otherwise has to guess which tag is whom.
