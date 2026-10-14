@@ -2257,3 +2257,12 @@ deliverable built on this same Vite/TS static template:
   half-open streams, sibling-tab identity, out-of-view arrivals), found by
   forcing event order in jsdom rather than trusting localhost timing. The
   well ran dry around run 12, as on crit 8.
+- **Crit 10 (logs say who did what): name a person in a log line by a short
+  hash of their identity cookie, never the cookie itself.** A bearer token
+  read out on a projector is leaked. Mint the identity on first page load,
+  not first write, so idle visitors are already distinct. JSON-quote free
+  text so a note with a newline can't forge a line. To test logging, spawn a
+  dedicated server in the spec and read its stdout, since the shared CI app's
+  stdout isn't visible. Mutation-check by making the tag return the raw
+  cookie. A spec's own readiness `fetch(origin)` also counts as a visit, so
+  assert on the last N log lines, not all of them.
