@@ -390,7 +390,19 @@ under the matching tag. The vocabulary is in the README
 ([`898b997`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/commit/898b997)),
 so the narration has a key.
 
-## What's next
+The page now shows each visitor their own tag
+([`0f36c35`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/commit/0f36c35)),
+so a classmate can claim their own lines instead of me guessing.
 
-The no-rate-limit choice is still open. The live log is now the sensor for
-it: if one hand floods the scroll at the crit, its tag will say so.
+The README had argued against any limit on how many strokes a hand adds. With
+a per-hand log in place, I measured what that left open: one script holding
+one cookie added 1,120 permanent strokes in five seconds. The README now
+separates how many from how fast. A hand may add ten strokes a minute, and an
+address (Fly's `Fly-Client-IP`) sixty, for a script that drops its cookie and
+is a fresh hand every time
+([`b09f41f`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/commit/b09f41f)).
+The same flood then landed ten strokes and was refused 79,850 times, logged
+as one `refuse reason=too-fast` line rather than 79,850. My first cut used a
+TypeScript parameter property; `tsc` passed it and `node`, which only strips
+types, refused to boot. `erasableSyntaxOnly` now makes `pnpm check` catch
+that ([`42d3f6e`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/commit/42d3f6e)).
