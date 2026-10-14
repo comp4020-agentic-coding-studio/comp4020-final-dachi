@@ -49,8 +49,10 @@ method, from any hand, edits or deletes a stroke once it's stored, the page
 tells you in text (not just ink) which strokes are yours, and every control
 on it is a native, labelled form element in the tab order. Also enforced:
 a stroke reaches every other open tab within a second, with no reload; a
-tab that reconnects is sent exactly the strokes it missed, in order; and no
-response or stream ever carries another visitor's `hand`.
+tab that reconnects is sent exactly the strokes it missed, in order; no
+response or stream ever carries another visitor's `hand`; and the server's
+log tells two first-time visitors apart from their first page load without
+ever printing either one's hand.
 
 Judged, by a visitor reading this page: whether the scroll reads as one
 continuous, shared object rather than a list of comments; whether finding
@@ -66,6 +68,12 @@ private view. The cookie is the only proof of whose a stroke is, so the
 server never sends it back out: each response just says whether a stroke is
 yours.
 
+Your hand is given to your browser the moment it first loads the page, so
+two people who've never posted are already two hands. The server decides
+whose a stroke is from that cookie alone: a request body that names a hand,
+an id or a time is ignored, and no route edits or deletes anything, so no
+hand can change another's stroke, or its own.
+
 The scroll is live. When anyone adds a stroke, it appears in every open tab
 within about a second, and a line above the scroll says in words whether
 your tab is live or reconnecting. Nothing is ever edited, so two hands
@@ -79,3 +87,21 @@ redrawing the scroll you were reading. A scroll that silently lost what was
 added while you looked away would fail the "coming back is worth it" half of
 this README's argument. The alternatives and their costs are in
 [`docs/decisions/0001-reconnect-catches-up-by-stroke-id.md`](https://github.com/comp4020-agentic-coding-studio/comp4020-final-dachi/blob/main/docs/decisions/0001-reconnect-catches-up-by-stroke-id.md).
+
+## Who did what, from the logs
+
+The server prints one line per thing a person does, so `flyctl logs` can
+narrate a session without anyone touching the app. Each line starts with
+what happened: `arrive` (loaded the page, `new=true` the first time), `read`
+(fetched the scroll, with how many strokes were theirs), `watch` and `leave`
+(a live stream opened or closed, with how many are open), `stroke` (added
+one, with its id, ink and note), `refuse` (a write turned away, and why) and
+`miss` (an unknown route, with its method, so an attempt to `DELETE` a
+stroke shows up as one).
+
+Every line names a hand by a six-character tag, the start of a hash of its
+cookie. The same browser always gets the same tag, so two classmates are
+`hand=cdec90` and `hand=042452` from their first page load on. The tag can't
+be turned back into the cookie, which matters because a hand is a bearer
+token and these logs get read out on a projector. A note is printed quoted,
+so one with a line break in it can't pass for a line of its own.

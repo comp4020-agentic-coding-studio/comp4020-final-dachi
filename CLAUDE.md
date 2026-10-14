@@ -16,6 +16,8 @@ these, the README's argument has to change first, not the other way round.
   per-browser identity to add a stroke.
 - Never send a stroke's `hand` to a client. It's a bearer token; a response
   says only whether each stroke is the requester's own (`yours`).
+- Never print a hand to the logs. A line names a hand only by
+  `handTag()` (`src/log.ts`), and free text in a line is quoted.
 - Never accept a stroke from a cross-site request. A write with no edit or
   delete path is permanent, so a drive-by page silently posting on a
   visitor's behalf is as serious as a bad value in the fields themselves.
@@ -38,6 +40,9 @@ these, the README's argument has to change first, not the other way round.
   stream is replayed exactly what it missed, by stroke id.
   `docs/decisions/0001-reconnect-catches-up-by-stroke-id.md` is the argument;
   change it before changing that behaviour.
+- Every action a person takes (arrive, read, watch, leave, stroke, refuse)
+  logs one line with their hand's tag; the README's "Who did what" section
+  is the vocabulary. A new route or refusal logs too.
 - The broadcast bus is in-process, which is only correct on one machine.
   Don't scale past one without a shared bus.
 - `pnpm check` and `pnpm check:evidence` pass before a commit.
