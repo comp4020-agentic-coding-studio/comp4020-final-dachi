@@ -12,6 +12,16 @@ export const PALETTE = [
 
 export type Color = (typeof PALETTE)[number];
 
+// public/app.js shows the same names beside each swatch; the logs use them too.
+export const COLOR_NAMES: Record<Color, string> = {
+  "#2b2118": "walnut",
+  "#5b4636": "umber",
+  "#8a6d3b": "ochre",
+  "#3f5d40": "pine",
+  "#3a5a6b": "slate",
+  "#7a3b3b": "madder",
+};
+
 const MAX_NOTE_LENGTH = 140;
 
 export type ValidationResult =

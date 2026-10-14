@@ -3,7 +3,8 @@ import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { randomUUID } from "node:crypto";
 import { addMark, listMarks, listMarksAfter, type Mark } from "./db.ts";
-import { validateMark } from "./marks.ts";
+import { COLOR_NAMES, validateMark } from "./marks.ts";
+import { handTag, log } from "./log.ts";
 import { renderReadme } from "./readme.ts";
 
 const PORT = Number(process.env.PORT ?? 8080);
@@ -24,6 +25,24 @@ const HAND_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
 
 function isValidHand(value: string | undefined): value is string {
   return typeof value === "string" && HAND_PATTERN.test(value);
+}
+
+function handOf(req: IncomingMessage): string | null {
+  const { hand } = parseCookies(req.headers.cookie);
+  return isValidHand(hand) ? hand : null;
+}
+
+// A browser is a person from its first page load, not its first stroke, so
+// two first-time visitors are already told apart (in the logs, and on their
+// own streams) before either has posted.
+function mintHand(): { hand: string; cookie: string } {
+  const hand = randomUUID();
+  const fiveYears = 60 * 60 * 24 * 365 * 5;
+  // HttpOnly: no script on this page ever reads document.cookie, so there's
+  // no reason a hand — a five-year bearer token for a store with no delete
+  // path — should be exposed to one. Secure: fly.toml forces https, so the
+  // browser never has an http origin to send it from anyway.
+  return { hand, cookie: `hand=${hand}; Path=/; Max-Age=${fiveYears}; SameSite=Lax; HttpOnly; Secure` };
 }
 
 // A cross-site page can make a visitor's browser submit a POST without the
@@ -87,8 +106,9 @@ function sendMark(res: ServerResponse, mark: Mark, you: string | null) {
   res.write(`id: ${mark.id}\nevent: mark\ndata: ${JSON.stringify(toPublic(mark, you))}\n\n`);
 }
 
-function broadcast(mark: Mark) {
+function broadcast(mark: Mark): number {
   for (const { res, you } of subscribers) sendMark(res, mark, you);
+  return subscribers.size;
 }
 
 // Where a stream should resume from: the later of the browser's own
@@ -179,6 +199,14 @@ const server = createServer(async (req, res) => {
     const url = new URL(req.url ?? "/", "http://localhost");
 
     if (req.method === "GET" && url.pathname === "/") {
+      let hand = handOf(req);
+      const fresh = hand === null;
+      if (!hand) {
+        const minted = mintHand();
+        hand = minted.hand;
+        res.setHeader("set-cookie", minted.cookie);
+      }
+      log("arrive", { hand: handTag(hand), new: fresh });
       await serveStatic(res, "index.html", "text/html");
       return;
     }
@@ -197,20 +225,25 @@ const server = createServer(async (req, res) => {
       return;
     }
     if (req.method === "GET" && url.pathname === "/api/marks") {
-      const cookies = parseCookies(req.headers.cookie);
-      const you = isValidHand(cookies.hand) ? cookies.hand : null;
+      const you = handOf(req);
+      const marks = listMarks();
+      log("read", {
+        hand: handTag(you),
+        strokes: marks.length,
+        own: you ? marks.filter((m) => m.hand === you).length : 0,
+      });
       res.writeHead(200, { "content-type": "application/json" });
-      res.end(JSON.stringify({ marks: listMarks().map((m) => toPublic(m, you)) }));
+      res.end(JSON.stringify({ marks: marks.map((m) => toPublic(m, you)) }));
       return;
     }
     if (req.method === "GET" && url.pathname === "/api/marks/stream") {
+      const you = handOf(req);
       if (subscribers.size >= MAX_SUBSCRIBERS) {
+        log("refuse", { hand: handTag(you), reason: "too-many-streams", open: subscribers.size });
         res.writeHead(503, { "content-type": "text/plain", "retry-after": "10" });
         res.end("too many open streams");
         return;
       }
-      const cookies = parseCookies(req.headers.cookie);
-      const you = isValidHand(cookies.hand) ? cookies.hand : null;
       res.writeHead(200, {
         "content-type": "text/event-stream",
         "cache-control": "no-cache",
@@ -222,42 +255,45 @@ const server = createServer(async (req, res) => {
       res.write("retry: 3000\n\n");
       // Catch-up and subscribe in one synchronous step: node:sqlite doesn't
       // yield, so no stroke can land between the replay and joining the set.
-      for (const mark of listMarksAfter(resumeAfter(req, url))) sendMark(res, mark, you);
+      const after = resumeAfter(req, url);
+      const missed = listMarksAfter(after);
+      for (const mark of missed) sendMark(res, mark, you);
       const subscriber = { res, you };
       subscribers.add(subscriber);
+      log("watch", { hand: handTag(you), after, replayed: missed.length, open: subscribers.size });
       const heartbeat = setInterval(() => res.write("event: ping\ndata:\n\n"), HEARTBEAT_MS);
       res.on("close", () => {
         clearInterval(heartbeat);
         subscribers.delete(subscriber);
+        log("leave", { hand: handTag(you), open: subscribers.size });
       });
       return;
     }
     if (req.method === "POST" && url.pathname === "/api/marks") {
       if (!isSameOrigin(req)) {
+        log("refuse", { hand: handTag(handOf(req)), reason: "cross-site-request", origin: req.headers.origin ?? "none" });
         res.writeHead(403, { "content-type": "application/json" });
         res.end(JSON.stringify({ error: "cross-site-request" }));
         return;
       }
 
-      const cookies = parseCookies(req.headers.cookie);
-      let hand = isValidHand(cookies.hand) ? cookies.hand : undefined;
+      // A browser that never loaded / (a script, or cookies cleared since)
+      // still gets a hand here, on its first stroke.
+      let hand = handOf(req);
+      const fresh = hand === null;
       const headers: Record<string, string> = {};
       if (!hand) {
-        hand = randomUUID();
-        const fiveYears = 60 * 60 * 24 * 365 * 5;
-        // HttpOnly: no script on this page ever reads document.cookie, so
-        // there's no reason a hand — a five-year bearer token for a store
-        // with no delete path — should be exposed to one. Secure: fly.toml
-        // forces https, so the browser never has an http origin to send it
-        // from anyway.
-        headers["set-cookie"] =
-          `hand=${hand}; Path=/; Max-Age=${fiveYears}; SameSite=Lax; HttpOnly; Secure`;
+        const minted = mintHand();
+        hand = minted.hand;
+        headers["set-cookie"] = minted.cookie;
       }
+      const refuse = (reason: string) => log("refuse", { hand: handTag(hand), new: fresh, reason });
 
       let body: string;
       try {
         body = await readBody(req);
       } catch {
+        refuse("too-large");
         res.writeHead(413, { ...headers, connection: "close" });
         res.end();
         req.destroy();
@@ -268,11 +304,13 @@ const server = createServer(async (req, res) => {
       try {
         payload = JSON.parse(body);
       } catch {
+        refuse("bad-json");
         res.writeHead(400, { ...headers, "content-type": "application/json" });
         res.end(JSON.stringify({ error: "bad-json" }));
         return;
       }
       if (typeof payload !== "object" || payload === null) {
+        refuse("bad-json");
         res.writeHead(400, { ...headers, "content-type": "application/json" });
         res.end(JSON.stringify({ error: "bad-json" }));
         return;
@@ -280,21 +318,34 @@ const server = createServer(async (req, res) => {
 
       const validated = validateMark(payload as Record<string, unknown>);
       if (!validated.ok) {
+        refuse(validated.reason);
         res.writeHead(422, { ...headers, "content-type": "application/json" });
         res.end(JSON.stringify({ error: validated.reason }));
         return;
       }
 
       const mark = addMark(hand, validated.note, validated.color);
-      broadcast(mark);
+      const reached = broadcast(mark);
+      log("stroke", {
+        hand: handTag(hand),
+        new: fresh,
+        id: mark.id,
+        ink: COLOR_NAMES[validated.color],
+        note: mark.note,
+        streams: reached,
+      });
       res.writeHead(201, { ...headers, "content-type": "application/json" });
       res.end(JSON.stringify({ mark: toPublic(mark, hand) }));
       return;
     }
 
+    // No route edits or deletes, so a PUT or DELETE lands here too: the
+    // method says whether a hand was trying to change the scroll.
+    if (url.pathname !== "/favicon.ico") log("miss", { hand: handTag(handOf(req)), method: req.method, path: url.pathname });
     res.writeHead(404, { "content-type": "text/plain" });
     res.end("not found");
   } catch (err) {
+    log("error", { method: req.method, path: req.url, message: err instanceof Error ? err.message : String(err) });
     console.error(err);
     if (!res.headersSent) {
       res.writeHead(500, { "content-type": "text/plain" });
