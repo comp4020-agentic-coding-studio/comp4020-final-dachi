@@ -111,3 +111,15 @@ it("keeps a note to one line, so a note can't forge a log line of its own", asyn
   await linesFor("stroke", 3);
   expect(stdout).not.toMatch(/^stroke hand=000000/m);
 });
+
+// A script's flood is refused thousands of times a second; one line says so,
+// and the rest would only bury the lines a narrator is reading.
+it("logs a hand held back for writing too fast once, not once per refused write", async () => {
+  const { cookie } = await visit();
+  const arrive = (await linesFor("arrive", 1)).at(-1)!;
+  for (let i = 0; i < 15; i++) await post(cookie, { color: "#2b2118", note: `flood ${i}` });
+
+  const fast = (await linesFor("refuse", 1)).filter((line) => line.includes("reason=too-fast"));
+  expect(fast).toHaveLength(1);
+  expect(tag(fast[0])).toBe(tag(arrive));
+});

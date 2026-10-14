@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { connect } from "node:net";
 import { expect, inject, it } from "vitest";
 
@@ -294,4 +295,47 @@ it("ignores a hand, id or timestamp a request body tries to set for itself", asy
     await fetch(new URL("/api/marks", baseUrl), { headers: { cookie: `hand=${someoneElse}` } })
   ).json();
   expect(asSomeoneElse.marks.find((m: { id: number }) => m.id === created.id)?.yours).toBe(false);
+});
+
+// One script holding one cookie once added 1,120 permanent strokes in five
+// seconds. The scroll limits how fast a hand writes, never how much: the
+// strokes it already left stand, and another hand isn't held back by it.
+it("holds back a hand that strokes faster than a person could, without touching anyone else", async () => {
+  const first = await fetch(new URL("/", baseUrl));
+  const cookie = firstCookie(first)!;
+  const stroke = (note: string, headers: Record<string, string> = { cookie }) =>
+    fetch(new URL("/api/marks", baseUrl), {
+      method: "POST",
+      headers: postHeaders(headers),
+      body: JSON.stringify({ color: "#5b4636", note }),
+    });
+
+  for (let i = 0; i < 10; i++) expect((await stroke(`rate probe ${i}`)).status).toBe(201);
+  const refused = await stroke("rate probe, one too many");
+  expect(refused.status).toBe(429);
+  expect((await refused.json()).error).toBe("too-fast");
+
+  const { marks } = await (await fetch(new URL("/api/marks", baseUrl), { headers: { cookie } })).json();
+  const mine = marks.filter((m: { yours: boolean }) => m.yours);
+  expect(mine).toHaveLength(10);
+  expect(mine.map((m: { note: string }) => m.note)).not.toContain("rate probe, one too many");
+
+  expect((await stroke("someone else, meanwhile", {})).status).toBe(201);
+});
+
+// Dropping the cookie makes every request a fresh hand, so the address Fly's
+// proxy reports is what holds a script that does that. Refused attempts count
+// too, so this costs the scroll no strokes.
+it("holds back one address minting a fresh hand for every write", async () => {
+  // A documentation-range IPv6 address unique to this run, so repeated runs
+  // against one app inside a minute don't share a window.
+  const address = `2001:db8::${randomUUID().slice(0, 4)}:${randomUUID().slice(0, 4)}`;
+  const attempt = () =>
+    fetch(new URL("/api/marks", baseUrl), {
+      method: "POST",
+      headers: postHeaders({ "fly-client-ip": address }),
+      body: JSON.stringify({ color: "#ff00ff" }),
+    });
+  for (let i = 0; i < 60; i++) expect((await attempt()).status).toBe(422);
+  expect((await attempt()).status).toBe(429);
 });

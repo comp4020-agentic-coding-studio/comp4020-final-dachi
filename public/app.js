@@ -265,7 +265,9 @@ form.addEventListener("submit", async (event) => {
     statusEl.textContent =
       error === "note-too-long"
         ? "that mark couldn't be added — try a shorter note."
-        : "the scroll couldn't take that mark just now — try again in a moment.";
+        : res.status === 429
+          ? "that's a lot of strokes in a minute — wait a little before the next."
+          : "the scroll couldn't take that mark just now — try again in a moment.";
     return;
   }
 

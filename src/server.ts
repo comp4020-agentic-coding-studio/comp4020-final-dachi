@@ -5,6 +5,7 @@ import { randomUUID } from "node:crypto";
 import { addMark, listMarks, listMarksAfter, type Mark } from "./db.ts";
 import { COLOR_NAMES, validateMark } from "./marks.ts";
 import { handTag, log } from "./log.ts";
+import { Limiter, PER_ADDRESS, PER_HAND } from "./limit.ts";
 import { renderReadme } from "./readme.ts";
 
 const PORT = Number(process.env.PORT ?? 8080);
@@ -88,6 +89,16 @@ interface Subscriber {
   you: string | null;
 }
 const subscribers = new Set<Subscriber>();
+
+const byHand = new Limiter(PER_HAND);
+const byAddress = new Limiter(PER_ADDRESS);
+
+// Fly's proxy sets Fly-Client-IP from the connection itself. Off Fly (a
+// local run, CI's container) nothing sets it, so there's no address to limit.
+function addressOf(req: IncomingMessage): string | null {
+  const ip = req.headers["fly-client-ip"];
+  return typeof ip === "string" && ip ? ip : null;
+}
 
 // Each stream is a socket and a little memory held open for as long as the
 // tab is. A crit room is a few dozen tabs; this keeps a script opening
@@ -290,6 +301,20 @@ const server = createServer(async (req, res) => {
         headers["set-cookie"] = minted.cookie;
       }
       const refuse = (reason: string) => log("refuse", { hand: handTag(hand), new: fresh, reason });
+
+      // Counted per attempt, before the body is read, so a flood of refused
+      // writes is held back too. Only the first refusal in a run is logged:
+      // a script's thousands would bury the lines a narrator reads.
+      const address = addressOf(req);
+      const handRefused = byHand.take(hand);
+      const addressRefused = handRefused || address === null ? 0 : byAddress.take(address);
+      if (handRefused || addressRefused) {
+        if (handRefused === 1) refuse("too-fast");
+        if (addressRefused === 1) refuse("too-fast-address");
+        res.writeHead(429, { ...headers, "content-type": "application/json", "retry-after": "60" });
+        res.end(JSON.stringify({ error: "too-fast" }));
+        return;
+      }
 
       let body: string;
       try {

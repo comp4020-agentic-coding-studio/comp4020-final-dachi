@@ -315,6 +315,17 @@ it("doesn't blame the note when the server, not the note, refused the post", asy
   expect((doc.getElementById("note") as HTMLInputElement).value).toBe("a perfectly short note");
 });
 
+it("tells someone held back for writing too fast to wait, not to try again now", async () => {
+  const doc = await openPage("", { postStatus: 429 });
+  await until(() => doc.getElementById("live-state")!.textContent!.startsWith("live"), "the stream to open");
+
+  doc.querySelector<HTMLButtonElement>("#add-mark-form button")!.click();
+  const status = doc.getElementById("form-status")!;
+  await until(() => status.textContent !== "adding your mark…", "the post to finish");
+  expect(status.textContent).toMatch(/wait/);
+  expect(status.textContent).not.toMatch(/try again/);
+});
+
 // A stream can die without either end saying so (a phone waking on a
 // connection the server already dropped). EventSource still reads OPEN, so the
 // page has to notice the silence itself and reopen from where it was.
