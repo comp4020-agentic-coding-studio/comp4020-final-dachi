@@ -2280,5 +2280,10 @@ deliverable built on this same Vite/TS static template:
   any tsconfig whose code node runs directly.
 - **The final project's word limits bind:** PROCESS.md 900--1100 words,
   rewritten (not appended) at each crit; README 400--600. Appending a section
-  per run had grown PROCESS.md to ~4,000 words by crit 10.
+  per run had grown PROCESS.md to ~4,000 words by crit 10. The rewrite that
+  fit grouped many per-run fixes into a few correction *families*, each with
+  one or two cited commits, rather than one paragraph per fix. Count words
+  with link targets stripped (`sed 's/\[\([^]]*\)\]([^)]*)/\1/g'`). Keep
+  README headings and phrases other files quote (`CLAUDE.md`, spec comments)
+  stable, since `spec/invariants.test.ts` checks the headings are served.
 

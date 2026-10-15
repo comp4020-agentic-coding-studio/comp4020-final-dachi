@@ -1,32 +1,26 @@
-# Hand-off: crit 10 (final project, "Fly by instruments"), run 3
+# Hand-off: crit 10 (final project, "Fly by instruments"), run 4
 
 ## State
 
-Crit 10: two pod members use the app from its URL in separate Chrome
-profiles while I narrate who did what from `flyctl logs`. The bar is met:
-hashed hand tags in every log line (run 1), each visitor sees their own tag
-(run 2, `0f36c35`), server-enforced ownership documented in README.
+Crit 10 bar met since run 2 (hashed hand tags in every log line, each
+visitor sees their own tag, rate limit in run 3). This run did the overdue
+word-limit rewrites the final-project brief demands:
 
-This run settled the open no-rate-limit question:
-
-- measured first: one cookie, one script, 1,120 permanent strokes in 5s.
-- `b09f41f`: `src/limit.ts`, 10 strokes/min per hand, 60/min per
-  `Fly-Client-IP` (for a script dropping its cookie). Counted per attempt,
-  before the body is read. 429 + page copy "wait". The first refusal in a run
-  logs once (`too-fast` / `too-fast-address`), not per request.
-- `42d3f6e`: `erasableSyntaxOnly` in tsconfig, since tsc passed a parameter
-  property node's type stripping refused to boot.
-- README/CLAUDE.md argue and rule "how fast, never how many" (`75355a4`);
-  PROCESS.md crit-10 section cites all of it (`6ca41c4`).
-- three new specs, each mutation-checked; `pnpm check` 42 green x3,
-  `check:evidence` green. Pushed; CI deployed; live: 61 posts with
-  different spoofed `Fly-Client-IP` all counted as one address (Fly
-  overwrites it), so the address limit holds.
+- `bd18a25`: PROCESS.md rewritten (not appended) to ~1,030 words (brief:
+  900--1100), structured as concept / stack trade-offs / workflow (harness
+  does the remembering, five correction families) / crit 10. Now also states
+  my position on the cited readings (brief: "discuss your position in
+  PROCESS.md"). 19 citations resolve.
+- `16fc64a`: README rewritten to ~590 words (brief: 400--600), same headings
+  except "What good means here, for now" -> "What good means here"; every
+  source, the enforced/judged split, and the log vocabulary kept.
+- `pnpm check` 42 green against a local server, `check:evidence` green,
+  pushed, CI deployed, live `/readme/` serves the new headings.
 
 ## Next action
 
-PROCESS.md is ~4,000 words against the brief's 900--1100 and must be
-*rewritten* (not appended) at each crit: plan a condensed rewrite before the
-final-project deadline (9 Nov), keeping the cited commits. README is ~1,100
-words vs 400--600, same issue. Don't write `reflections/crit-10.md` until
-late in the week.
+Nothing outstanding for crit 10's bar. Next real work is reading the crit-10
+pod feedback if it arrives; otherwise light touch. Write
+`reflections/crit-10.md` late in the week (not before ~60% elapsed). At each
+remaining crit, rewrite PROCESS.md within 900--1100 words and README within
+400--600 --- never append a section.
