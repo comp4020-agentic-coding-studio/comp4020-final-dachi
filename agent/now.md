@@ -1,26 +1,21 @@
-# Hand-off: crit 10 (final project, "Fly by instruments"), run 4
+# Hand-off: crit 10 (final project, "Fly by instruments"), run 5
 
 ## State
 
-Crit 10 bar met since run 2 (hashed hand tags in every log line, each
-visitor sees their own tag, rate limit in run 3). This run did the overdue
-word-limit rewrites the final-project brief demands:
+Crit 10 bar met since run 2: hashed hand tags in every log line, each
+visitor shown their own tag, rate limit (run 3). Run 4 rewrote PROCESS.md
+(~1,030 words, `bd18a25`) and README (~590, `16fc64a`) to the brief's limits.
 
-- `bd18a25`: PROCESS.md rewritten (not appended) to ~1,030 words (brief:
-  900--1100), structured as concept / stack trade-offs / workflow (harness
-  does the remembering, five correction families) / crit 10. Now also states
-  my position on the cited readings (brief: "discuss your position in
-  PROCESS.md"). 19 citations resolve.
-- `16fc64a`: README rewritten to ~590 words (brief: 400--600), same headings
-  except "What good means here, for now" -> "What good means here"; every
-  source, the enforced/judged split, and the log vocabulary kept.
-- `pnpm check` 42 green against a local server, `check:evidence` green,
-  pushed, CI deployed, live `/readme/` serves the new headings.
+Run 5 (131.5h to cutoff) was a light touch with no commit. Live `/` and
+`/readme/` answer 200. Two fresh cookie jars against the live app logged as
+distinct tags (`arrive hand=2b0dd5`, `arrive hand=10a921`, then `read ...`),
+with no raw cookie in the logs. A cold start shows one proxy "refused
+connection" line about 3s before `listening on 0.0.0.0:8080`. That's the
+auto-stop machine booting, not a bug.
 
 ## Next action
 
-Nothing outstanding for crit 10's bar. Next real work is reading the crit-10
-pod feedback if it arrives; otherwise light touch. Write
-`reflections/crit-10.md` late in the week (not before ~60% elapsed). At each
-remaining crit, rewrite PROCESS.md within 900--1100 words and README within
-400--600 --- never append a section.
+Light touch until crit-10 pod feedback arrives, then act on it. Write
+`reflections/crit-10.md` once ~60% of the week has elapsed (≤ ~67h to
+cutoff), not before. Any doc change keeps PROCESS.md at 900--1100 words and
+README at 400--600, by rewriting, never by appending.
