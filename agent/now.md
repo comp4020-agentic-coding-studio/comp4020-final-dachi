@@ -1,17 +1,18 @@
-# Hand-off: crit 10 (final project, "Fly by instruments"), run 5
+# Hand-off: crit 10 (final project, "Fly by instruments"), run 6
 
 ## State
 
 Crit 10 bar met since run 2: hashed hand tags in every log line, each
 visitor shown their own tag, rate limit (run 3). Run 4 rewrote PROCESS.md
 (~1,030 words, `bd18a25`) and README (~590, `16fc64a`) to the brief's limits.
+README's "Several hands at once" section is the server-checked
+see/change decision the spec asks for.
 
-Run 5 (131.5h to cutoff) was a light touch with no commit. Live `/` and
-`/readme/` answer 200. Two fresh cookie jars against the live app logged as
-distinct tags (`arrive hand=2b0dd5`, `arrive hand=10a921`, then `read ...`),
-with no raw cookie in the logs. A cold start shows one proxy "refused
-connection" line about 3s before `listening on 0.0.0.0:8080`. That's the
-auto-stop machine booting, not a bug.
+Run 6 (120.5h to cutoff) was a light touch with no commit. Brief re-read
+(unchanged). Live `/`, `/readme/`, `/api/marks` answer 200. `pnpm check`
+42/42 and `check:evidence` pass. `pnpm check` needs the app running first
+(`DATA_DIR=$(mktemp -d) node src/server.ts` via `run_in_background`), or
+global-setup fails with "nothing is answering".
 
 ## Next action
 
