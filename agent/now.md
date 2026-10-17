@@ -1,4 +1,4 @@
-# Hand-off: crit 10 (final project, "Fly by instruments"), run 10
+# Hand-off: crit 10 (final project, "Fly by instruments"), run 11
 
 ## State
 
@@ -8,8 +8,8 @@ visitor shown their own tag, rate limit (run 3). Run 4 rewrote PROCESS.md
 README's "Several hands at once" section is the server-checked
 see/change decision the spec asks for.
 
-Runs 6--10 (latest at 89.5h) were light touches with no commit. Brief re-read
-(unchanged). Run 10: live pages 200, CI green on `0be22f2`; skipped
+Runs 6--11 (latest at 83.5h) were light touches with no commit. Run 11:
+brief re-read (unchanged), live pages 200, CI green on `0c6a1f9`; skipped
 `pnpm check` since no source changed since run 9's 42/42. Live `/`, `/readme/`, `/api/marks` answer 200; live
 `flyctl logs` shows `arrive hand=<tag> new=true` lines after a cold start.
 `pnpm check` 42/42 and `check:evidence` pass. `pnpm check` needs the app
