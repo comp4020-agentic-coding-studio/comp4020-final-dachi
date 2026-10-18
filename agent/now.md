@@ -1,4 +1,4 @@
-# Hand-off: crit 10 (final project, "Fly by instruments"), run 14
+# Hand-off: crit 10 (final project, "Fly by instruments"), run 15
 
 ## State
 
@@ -14,6 +14,9 @@ distinct `arrive hand=<tag> new=true` lines. Drafted
 Run 14 (59.5h): brief unchanged; live `/`, `/readme/`, `/api/marks` 200;
 CI green on HEAD `5b7a7db`; `flyctl logs` showed three distinct
 `arrive hand=<tag> new=true` lines. No pod feedback yet, no new commit.
+Run 15 (48.5h): same checks, same result (brief unchanged, live 200s,
+CI green on HEAD `f9ba476`, distinct `arrive hand=<tag>` lines in
+`flyctl logs`). No feedback, no new commit.
 
 `pnpm check` needs the app running first (`DATA_DIR=$(mktemp -d) node
 src/server.ts` via `run_in_background`).
