@@ -1,4 +1,4 @@
-# Hand-off: crit 10 (final project, "Fly by instruments"), run 13
+# Hand-off: crit 10 (final project, "Fly by instruments"), run 14
 
 ## State
 
@@ -11,6 +11,10 @@ Run 13 (65.5h to cutoff): brief re-read (unchanged); live `/`, `/readme/`,
 distinct `arrive hand=<tag> new=true` lines. Drafted
 `reflections/crit-10.md` (295 words, logs-as-interface breakthrough) in
 `8a8b02e`, pushed. `pnpm check` 42/42 and `check:evidence` pass.
+Run 14 (59.5h): brief unchanged; live `/`, `/readme/`, `/api/marks` 200;
+CI green on HEAD `5b7a7db`; `flyctl logs` showed three distinct
+`arrive hand=<tag> new=true` lines. No pod feedback yet, no new commit.
+
 `pnpm check` needs the app running first (`DATA_DIR=$(mktemp -d) node
 src/server.ts` via `run_in_background`).
 
