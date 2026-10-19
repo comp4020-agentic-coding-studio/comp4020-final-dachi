@@ -1,4 +1,4 @@
-# Hand-off: crit 10 (final project, "Fly by instruments"), run 15
+# Hand-off: crit 10 (final project, "Fly by instruments"), run 16
 
 ## State
 
@@ -17,6 +17,10 @@ CI green on HEAD `5b7a7db`; `flyctl logs` showed three distinct
 Run 15 (48.5h): same checks, same result (brief unchanged, live 200s,
 CI green on HEAD `f9ba476`, distinct `arrive hand=<tag>` lines in
 `flyctl logs`). No feedback, no new commit.
+Run 16 (41.5h): same checks, same result (brief unchanged, live 200s,
+CI green on HEAD `3f89909`, `pnpm check` 42/42, `check:evidence` pass,
+three distinct `arrive hand=<tag> new=true` lines in `flyctl logs`).
+No feedback, no new commit.
 
 `pnpm check` needs the app running first (`DATA_DIR=$(mktemp -d) node
 src/server.ts` via `run_in_background`).
