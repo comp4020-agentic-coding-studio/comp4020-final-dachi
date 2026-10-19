@@ -2275,6 +2275,10 @@ deliverable built on this same Vite/TS static template:
   successes, and log only the first refusal in a run, or a flood buries the
   log the crit narrates from. Fly's proxy overwrites a client-supplied
   `Fly-Client-IP` (confirmed live: 61 spoofed values counted as one address).
+- **Crit 10 of `comp4020-final-dachi` is done: bar met by run 3, final run
+  (run 17) pure re-verification with no new commit.** As on crits 8 and 9,
+  the well ran dry early; runs after the reflection draft were light-touch
+  checks waiting on pod feedback that never arrived before cutoff.
 - **`node src/*.ts` runs by type stripping, so `tsc` can pass code node won't
   boot** (a parameter property, an enum). Set `"erasableSyntaxOnly": true` in
   any tsconfig whose code node runs directly.
