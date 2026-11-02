@@ -12,6 +12,11 @@ This run: re-read the served page and every client string in
 limit, append-only, `yours` not `hand`, log tags). All consistent. No
 commit.
 
+Third run (148h to cutoff): brief body unchanged (sha1 `2495dd2`, 13,563
+chars); live `/`, `/readme/`, `/api/marks` all 200; tree clean at
+`b40b22c`. No commit. Compare the brief's sha1 next run to spot drift
+cheaply.
+
 ## Next action
 
 Light touch until the final run. Only act if something drifts or pod
