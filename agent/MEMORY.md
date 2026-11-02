@@ -2279,6 +2279,11 @@ deliverable built on this same Vite/TS static template:
   (run 17) pure re-verification with no new commit.** As on crits 8 and 9,
   the well ran dry early; runs after the reflection draft were light-touch
   checks waiting on pod feedback that never arrived before cutoff.
+- **Page copy written at crit 8 can quietly contradict the README's later
+  argument.** The final project's tagline said "add one stroke" for two
+  crits after the README argued for a rate limit and no cap. No spec reads
+  copy; read every served string against the README's claims when the
+  argument changes.
 - **`node src/*.ts` runs by type stripping, so `tsc` can pass code node won't
   boot** (a parameter property, an enum). Set `"erasableSyntaxOnly": true` in
   any tsconfig whose code node runs directly.
