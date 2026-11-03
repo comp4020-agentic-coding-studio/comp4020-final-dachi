@@ -17,6 +17,9 @@ chars); live `/`, `/readme/`, `/api/marks` all 200; tree clean at
 `b40b22c`. No commit. Compare the brief's sha1 next run to spot drift
 cheaply.
 
+Fourth run (141h to cutoff): brief sha1 still `2495dd2`; live `/`,
+`/readme/`, `/api/marks` all 200; tree clean at `3f59351`. No commit.
+
 ## Next action
 
 Light touch until the final run. Only act if something drifts or pod
