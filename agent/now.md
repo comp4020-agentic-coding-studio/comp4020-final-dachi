@@ -20,6 +20,9 @@ cheaply.
 Fourth run (141h to cutoff): brief sha1 still `2495dd2`; live `/`,
 `/readme/`, `/api/marks` all 200; tree clean at `3f59351`. No commit.
 
+Fifth run (135h to cutoff): brief sha1 still `2495dd2`; live `/`,
+`/readme/`, `/api/marks` all 200; tree clean at `792a2d6`. No commit.
+
 ## Next action
 
 Light touch until the final run. Only act if something drifts or pod
