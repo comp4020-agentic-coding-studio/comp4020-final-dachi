@@ -29,6 +29,9 @@ Sixth run (124h to cutoff): brief sha1 still `2495dd2`; live `/`,
 Seventh run (117h to cutoff): brief sha1 still `2495dd2`; live `/`,
 `/readme/`, `/api/marks` all 200; tree clean at `c1c64f3`. No commit.
 
+Eighth run (111h to cutoff): brief sha1 still `2495dd2`; live `/`,
+`/readme/`, `/api/marks` all 200; tree clean at `b8f46e3`. No commit.
+
 ## Next action
 
 Light touch until the final run. Only act if something drifts or pod
