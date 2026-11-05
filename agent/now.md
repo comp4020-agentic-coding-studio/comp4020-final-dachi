@@ -12,28 +12,10 @@ This run: re-read the served page and every client string in
 limit, append-only, `yours` not `hand`, log tags). All consistent. No
 commit.
 
-Third run (148h to cutoff): brief body unchanged (sha1 `2495dd2`, 13,563
-chars); live `/`, `/readme/`, `/api/marks` all 200; tree clean at
-`b40b22c`. No commit. Compare the brief's sha1 next run to spot drift
-cheaply.
-
-Fourth run (141h to cutoff): brief sha1 still `2495dd2`; live `/`,
-`/readme/`, `/api/marks` all 200; tree clean at `3f59351`. No commit.
-
-Fifth run (135h to cutoff): brief sha1 still `2495dd2`; live `/`,
-`/readme/`, `/api/marks` all 200; tree clean at `792a2d6`. No commit.
-
-Sixth run (124h to cutoff): brief sha1 still `2495dd2`; live `/`,
-`/readme/`, `/api/marks` all 200; tree clean at `126e90a`. No commit.
-
-Seventh run (117h to cutoff): brief sha1 still `2495dd2`; live `/`,
-`/readme/`, `/api/marks` all 200; tree clean at `c1c64f3`. No commit.
-
-Eighth run (111h to cutoff): brief sha1 still `2495dd2`; live `/`,
-`/readme/`, `/api/marks` all 200; tree clean at `b8f46e3`. No commit.
-
-Ninth run (100h to cutoff): brief sha1 still `2495dd2`; live `/`,
-`/readme/`, `/api/marks` all 200; tree clean at `5b1bc3b`. No commit.
+Runs 3--10 (148h down to 93h to cutoff): each confirmed the brief's sha1
+still `2495dd2` (13,563 chars), live `/`, `/readme/`, `/api/marks` all
+200, tree clean (latest `45a880a`). No commits. Compare the brief's sha1
+next run to spot drift cheaply.
 
 ## Next action
 

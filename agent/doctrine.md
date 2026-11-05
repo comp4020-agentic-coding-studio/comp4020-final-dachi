@@ -35,10 +35,14 @@ prompt did not name.
 
 ## The week and reading rule
 
-A deliverable is open for its final 168 hours: get something rendering early,
-deepen it in the middle, finish on the run the prompt calls your last. Read
-public work from closed weeks, including other agents'. Never read a
-current-week submission before your own cutoff, or anything private.
+A deliverable is open for its final 168 hours. Work in earnest on every run
+until the one the prompt calls your last: there is no steady state before then.
+The brief's acceptance bar is the floor; build toward what the brief is reaching
+for, not just its letter. Never invent busywork --- re-verifying what hasn't
+changed is not progress --- but a finished-looking repo still has a next most
+valuable change. Read public work from closed weeks, including other agents'.
+Never read a current-week submission before your own cutoff, or anything
+private.
 
 ## The routine
 
@@ -48,9 +52,10 @@ current-week submission before your own cutoff, or anything private.
    `memory/now.md` and stop; never invent a brief.
 3. **Take stock.** Read `git log --oneline` and the working tree. Continue the
    work already there.
-4. **Set the job from the prompt.** Until it calls a run your last: plan, build,
-   deepen. On that run: finish, and start nothing new. The hours to cutoff are
-   context, not the gate; never defer a finishing step on your own arithmetic.
+4. **Set the job from the prompt.** Until it calls a run your last: make the
+   most valuable next change. On that run: finish, and start nothing new. The
+   hours to cutoff are context, not the gate; never defer a finishing step on
+   your own arithmetic.
 5. **Do the work.** Commit with clear messages. `agent/` is harness-owned: never
    edit it.
 6. **Verify.** Before shipping, check every page and link in a real browser;
@@ -59,39 +64,39 @@ current-week submission before your own cutoff, or anything private.
 7. **Deploy, on a Fly.io deliverable.** From week 8 the repo carries a
    `fly.toml`, and the live URL is `https://<repo-name>.fly.dev/`. Nothing
    deploys it while the repo is private except you: run
-   `flyctl deploy --remote-only --ha=false -a <repo-name>` from the clone
-   (your app-scoped token is already in the session's environment as
-   `FLY_API_TOKEN`) once something renders, and again whenever the live app
-   should catch up with your commits. `flyctl status -a <repo-name>` and
-   `flyctl logs -a <repo-name>` read the running app. From the second
-   final-project crit on, the repo is already public: CI deploys every push to
-   `main`, and every commit is public the moment you push it. On a static
-   deliverable there is nothing to deploy: the harness publishes it.
+   `flyctl deploy --remote-only --ha=false -a <repo-name>` from the clone (your
+   app-scoped token is already in the session's environment as `FLY_API_TOKEN`)
+   once something renders, and again whenever the live app should catch up with
+   your commits. `flyctl status -a <repo-name>` and `flyctl logs -a <repo-name>`
+   read the running app. From the second final-project crit on, the repo is
+   already public: CI deploys every push to `main`, and every commit is public
+   the moment you push it. On a static deliverable there is nothing to deploy:
+   the harness publishes it.
 
 ## Finishing steps (on your final run)
 
 1. The site renders locally, console clean, every page reachable.
-2. `PROCESS.md` is your own account of how you got from the brief to the
-   harness and workflow behind the work, cited to real commits; it is not a
-   generic essay.
+2. `PROCESS.md` is your own account of how you got from the brief to the harness
+   and workflow behind the work, cited to real commits; it is not a generic
+   essay.
 3. For a crit, write the reflection into `reflections/crit-<n>.md`, `<n>` from
    the number leading the source's `id` (`crits/01-forgotten-web` →
    `crit-1.md`), so the number in the filename is the number in the repo name.
    Head it with the source's `title`, never a week number: week counts drift.
    One entry, 150–300 words, answering both standing prompts: the breakthrough
-   that moved the work forward, and what it changed about the developer you
-   want to be. The marking sweep reads that exact filename and no other. It
-   stays in the repo, out of the built site. An assessment has no reflection:
-   its written account is `PROCESS.md`.
+   that moved the work forward, and what it changed about the developer you want
+   to be. The marking sweep reads that exact filename and no other. It stays in
+   the repo, out of the built site. An assessment has no reflection: its written
+   account is `PROCESS.md`.
 4. When the source's `related` names a `-retro` crit, `PROCESS.md` is what the
    retro presents from, so it has to carry the breakthrough: something specific
    (a prompt, a harness change, an insight), with the before and after. The
    retro writes no file of its own.
 5. Commit everything, `git status` clean, and push. On a Fly.io deliverable,
    deploy that commit and confirm the live URL serves it.
-6. Update both memory files. The harness scans, publishes and freezes the
-   commit you pushed (and on a static deliverable deploys it); you never hold
-   its GitHub credential.
+6. Update both memory files. The harness scans, publishes and freezes the commit
+   you pushed (and on a static deliverable deploys it); you never hold its
+   GitHub credential.
 
 ## Pod runs
 
