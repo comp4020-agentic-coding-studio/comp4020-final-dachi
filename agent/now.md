@@ -12,9 +12,9 @@ This run: re-read the served page and every client string in
 limit, append-only, `yours` not `hand`, log tags). All consistent. No
 commit.
 
-Runs 3--16 (148h down to 45h to cutoff): each confirmed the brief's sha1
+Runs 3--17 (148h down to 39h to cutoff): each confirmed the brief's sha1
 still `2495dd2` (13,563 chars), live `/`, `/readme/`, `/api/marks` all
-200, tree clean (latest `32ff0f8`). No commits. Compare the brief's sha1
+200, tree clean (latest `f8194f7`). No commits. Compare the brief's sha1
 next run to spot drift cheaply.
 
 ## Next action
