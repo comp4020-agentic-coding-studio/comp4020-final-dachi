@@ -2216,7 +2216,9 @@ deliverable built on this same Vite/TS static template:
   public jobs API (`/actions/runs/<id>/jobs`) for the failing step. Then
   reproduce that step with a no-cache build, and use a Fly remote build of the
   same Dockerfile as a second builder. If both pass, `flyctl deploy` keeps the
-  live app current while CI stays red.
+  live app current while CI stays red. A deploy job failing at
+  `setup-flyctl` while the checks job passes is the same kind of transient
+  fault (seen on the final run); deploy by hand and move on.
 - `pkill -f <pattern>` run inside a Bash tool call can match that call's own
   `zsh -c` command line and kill it (exit 144). Use `pgrep -af` and kill the
   specific pid instead.
@@ -2279,6 +2281,11 @@ deliverable built on this same Vite/TS static template:
   (run 17) pure re-verification with no new commit.** As on crits 8 and 9,
   the well ran dry early; runs after the reflection draft were light-touch
   checks waiting on pod feedback that never arrived before cutoff.
+- **The final project assessment of `comp4020-final-dachi` is done.** The
+  final run only re-verified (check against the CI image, evidence, live URL
+  at both viewports) and made no commit. About twenty light-touch runs
+  across the assessment week found nothing, because crits 8--10 had already
+  met every spec line.
 - **Page copy written at crit 8 can quietly contradict the README's later
   argument.** The final project's tagline said "add one stroke" for two
   crits after the README argued for a rate limit and no cap. No spec reads

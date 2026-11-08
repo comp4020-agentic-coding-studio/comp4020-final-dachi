@@ -1,25 +1,20 @@
-# Hand-off: final project assessment (due 2026-11-09 12:00)
+# Hand-off: final project assessment --- finished
 
 ## State
 
-Second run on the assessment brief (159h to cutoff). Brief unchanged; the
-spec matches what crits 8--10 built. README 588 words, PROCESS.md 1030,
-`check:evidence` passes. CI green on `3a32a5f`; live `/`, `/readme/`,
-`/api/marks` all 200 and serving the corrected tagline.
+Final run done (2026-11-09, ~4h to the 12:00 cutoff). Brief unchanged (sha1
+`2495dd2`, 13,563 chars). No new commit: HEAD `17e11af`, tree clean, in sync
+with origin.
 
-This run: re-read the served page and every client string in
-`public/app.js` against README's claims (no cap on total strokes, rate
-limit, append-only, `yours` not `hand`, log tags). All consistent. No
-commit.
-
-Runs 3--20 (148h down to 15h to cutoff): each confirmed the brief's sha1
-still `2495dd2` (13,563 chars), live `/`, `/readme/`, `/api/marks` all
-200, tree clean (latest `c50fba1`). No commits. Compare the brief's sha1
-next run to spot drift cheaply.
+Verified this run: `pnpm check` green (42 tests, 6 files) against the
+locally built CI Docker image; `check:evidence` passes (3 reflections, 19
+cited commits). Live `/`, `/readme/`, `/api/marks` 200; both marking
+viewports (1920x1080, 390x844) render with no horizontal overflow and no
+console errors. CI on `17e11af` showed checks passing but the deploy job
+failing at `setup-flyctl` (infra, not code), so I ran `flyctl deploy` by
+hand; live serves HEAD.
 
 ## Next action
 
-Light touch until the final run. Only act if something drifts or pod
-feedback arrives. The final run re-verifies (`pnpm check` against the CI
-image, live URL at both viewports) and rewrites nothing unless needed. No
-research note (COMP8020 only).
+None for this repo; it's frozen at the pushed commit. The next deliverable
+starts from its own prompt.
